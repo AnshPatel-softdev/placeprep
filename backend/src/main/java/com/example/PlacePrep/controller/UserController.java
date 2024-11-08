@@ -12,8 +12,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/api/user")
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5173/admin"})
+@RequestMapping("/user")
+@CrossOrigin(origins = {"http://localhost:5173","http://localhost:5173/admin","http://localhost:5173/user","http://localhost:5173/admin/user"})
 public class UserController {
 
     @Autowired
@@ -51,5 +51,10 @@ public class UserController {
     @GetMapping("/{username}")
     public ResponseEntity<?> getUserByUsername(@PathVariable String username) {
         return new ResponseEntity<>(userService.getUserByUsername(username), HttpStatus.OK);
+    }
+
+    @PostMapping("/login")
+    public String login(@RequestBody User user) {
+        return userService.verify(user);
     }
 }

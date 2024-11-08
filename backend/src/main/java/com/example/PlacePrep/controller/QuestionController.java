@@ -10,7 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/question")
+@RequestMapping("/question")
+@CrossOrigin(origins = "http://localhost:5173/admin")
 public class QuestionController {
 
     @Autowired
@@ -22,7 +23,7 @@ public class QuestionController {
     }
 
     @PostMapping
-    public ResponseEntity<?> saveQuestion(@RequestBody  Question question) {
+    public ResponseEntity<?> saveQuestion(@RequestBody Question question) {
         questionService.saveQuestion(question);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }

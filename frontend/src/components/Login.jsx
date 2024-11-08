@@ -13,34 +13,62 @@ const Login = ({ onLoginSuccess }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://localhost:8081/api/user/${username}`).then(response => {
-                if (response.ok) {
-                  return response.json();
-                }
-                throw new Error("Network response was not ok.");
-              })
-              .then(data => {
-                return data
-              })
-              .catch(error => {
-                console.error("There was a problem with the fetch operation:", error);
-              });
-              onLoginSuccess(response);
-              if(response.password === password)
-              {
-                if (response.role === 'ADMIN') {
-                  navigate('/admin');
-                } else if (response.role === 'STUDENT') {
-                  navigate('/student');
-                }
-              }
-              else
-              {
-                setError("Password is Incorrect")
-              }
-    } catch (err) {
+      // Step 1: Fetch the JWT token on login
+      const token = await fetch('http://localhost:8081/user/login', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username: username, password: password })
+      })
+      .then(response => response.text()) // Use .text() to log the raw body as a string
+      .then(body => {
+          console.log('Response Body:', body);
+          return body; // Return the token directly
+      })
+      .catch(error => {
+          console.error('Error fetching token:', error);
+          throw new Error('Failed to fetch token');
+      });
+      console.log(token)
+  
+      // Step 2: Use the token to authenticate the next request
+      const response = await fetch(`http://localhost:8081/user/${username}`, {
+          method: 'GET',
+          headers: {
+              'Authorization': `Bearer ${token}`, // Use the token here
+              'Content-Type': 'application/json'
+          }
+      })
+      .then(response => {
+          if (response.ok) {
+              return response.json();
+          }
+          throw new Error("Network response was not ok.");
+      })
+      .then(data => {
+          return data;
+      })
+      .catch(error => {
+          console.error("There was a problem with the fetch operation:", error);
+          throw new Error("Failed to authenticate request");
+      });
+      response.token = token
+      console.log(response);
+      onLoginSuccess(response);
+  
+      // Navigate based on user role
+      if (response.role === 'ADMIN') {
+          navigate('/admin');
+      } else if (response.role === 'STUDENT') {
+          navigate('/student');
+      } else {
+          setError("Password is incorrect");
+      }
+  
+  } catch (err) {
       setError(err.message);
-    }
+  }  
   };
 
   return (
