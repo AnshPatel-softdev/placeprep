@@ -25,28 +25,29 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    @PutMapping("/{username}")
-    public ResponseEntity<?> updateUser(@RequestBody User user,@PathVariable String username) {
-        userService.updateUser(user,username);
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateUser(@RequestBody User user,@PathVariable int id) {
+        userService.updateUser(user,id);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @DeleteMapping("/{username}")
-    public ResponseEntity<?> deleteUser(@PathVariable String username) {
-        userService.deleteUser(username);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable int id) {
+        userService.deleteUser(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }
     @GetMapping
     public ResponseEntity<?> getAllUsers() {
         return new ResponseEntity<>(userService.getAllUsers(), HttpStatus.OK);
     }
-    @PostMapping("/save/excel")
-    public ResponseEntity<?> saveUserFromExcel(@RequestParam("file") MultipartFile file) throws IOException {
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body("The uploaded file is empty.");
+    @PostMapping(value = "/upload-users", consumes = "multipart/form-data")
+    public ResponseEntity<?> uploadUsers(@RequestParam("file") MultipartFile file) {
+        try {
+            userService.saveUserFromExcel(file);
+            return ResponseEntity.ok().body("Users uploaded successfully");
+        } catch (IOException e) {
+            return ResponseEntity.badRequest().body("Error processing file: " + e.getMessage());
         }
-        userService.saveUserFromExcel(file);
-        return new ResponseEntity<>(HttpStatus.CREATED);
     }
     @GetMapping("/{username}")
     public ResponseEntity<?> getUserByUsername(@PathVariable String username) {

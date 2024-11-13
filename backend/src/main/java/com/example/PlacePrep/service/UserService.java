@@ -4,6 +4,8 @@ package com.example.PlacePrep.service;
 import com.example.PlacePrep.model.User;
 import com.example.PlacePrep.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -42,8 +44,8 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public void updateUser(User user, String username) {
-        User user1 = userRepository.findByUsername(username);
+    public void updateUser(User user, int id) {
+        User user1 = userRepository.findById(id);
         user1.setUsername(user.getUsername());
         user1.setPassword(user.getPassword());
         user1.setEmail(user.getEmail());
@@ -54,26 +56,65 @@ public class UserService {
         userRepository.save(user1);
     }
 
-    public void saveUserFromExcel(MultipartFile file) throws IOException{
-        Workbook workbook = new XSSFWorkbook(file.getInputStream());
-        Sheet sheet = workbook.getSheetAt(0);
-        List<User> users = new ArrayList<>();
-        for(int i = 0; i < sheet.getPhysicalNumberOfRows(); i++) {
-            User user = new User();
-            user.setUsername(sheet.getRow(i).getCell(0).getStringCellValue());
-            user.setPassword(sheet.getRow(i).getCell(1).getStringCellValue());
-            user.setEmail(sheet.getRow(i).getCell(2).getStringCellValue());
-            user.setFirstname(sheet.getRow(i).getCell(3).getStringCellValue());
-            user.setLastname(sheet.getRow(i).getCell(4).getStringCellValue());
-            user.setRole(sheet.getRow(i).getCell(5).getStringCellValue());
-            user.setCreated_at(LocalDateTime.now());
-            user.setUpdated_at(LocalDateTime.now());
-            users.add(user);
+    public void saveUserFromExcel(MultipartFile file) throws IOException {
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("File is empty");
         }
-        userRepository.saveAll(users);
+
+        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+            List<User> users = new ArrayList<>();
+
+            int startRow = 1;
+
+            for (int i = startRow; i < sheet.getPhysicalNumberOfRows(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+
+                try {
+                    User user = new User();
+                    user.setUsername(getCellValueAsString(row.getCell(0)));
+                    user.setPassword(getCellValueAsString(row.getCell(1)));
+                    user.setEmail(getCellValueAsString(row.getCell(2)));
+                    user.setFirstname(getCellValueAsString(row.getCell(3)));
+                    user.setLastname(getCellValueAsString(row.getCell(4)));
+                    user.setRole(getCellValueAsString(row.getCell(5)));
+                    user.setCreated_at(LocalDateTime.now());
+                    user.setUpdated_at(LocalDateTime.now());
+
+                    users.add(user);
+                } catch (Exception e) {
+                    throw new IOException("Error at row " + (i + 1) + ": " + e.getMessage());
+                }
+            }
+
+            if (!users.isEmpty()) {
+                userRepository.saveAll(users);
+            }
+        }
     }
-    public void deleteUser(String username) {
-        userRepository.delete(userRepository.findByUsername(username));
+
+    // Helper method to safely get cell values
+    private String getCellValueAsString(Cell cell) {
+        if (cell == null) {
+            return "";
+        }
+
+        switch (cell.getCellType()) {
+            case STRING:
+                return cell.getStringCellValue();
+            case NUMERIC:
+                return String.valueOf(cell.getNumericCellValue());
+            case BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue());
+            case BLANK:
+                return "";
+            default:
+                return "";
+        }
+    }
+    public void deleteUser(int id) {
+        userRepository.delete(userRepository.findById(id));
     }
     public Iterable<User> getAllUsers() {
         return userRepository.findAll();

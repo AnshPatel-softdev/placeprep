@@ -13,7 +13,6 @@ const Login = ({ onLoginSuccess }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // Step 1: Fetch the JWT token on login
       const token = await fetch('http://localhost:8081/user/login', {
           method: 'POST',
           headers: {
@@ -21,10 +20,10 @@ const Login = ({ onLoginSuccess }) => {
           },
           body: JSON.stringify({ username: username, password: password })
       })
-      .then(response => response.text()) // Use .text() to log the raw body as a string
+      .then(response => response.text())
       .then(body => {
           console.log('Response Body:', body);
-          return body; // Return the token directly
+          return body;
       })
       .catch(error => {
           console.error('Error fetching token:', error);
@@ -32,11 +31,10 @@ const Login = ({ onLoginSuccess }) => {
       });
       console.log(token)
   
-      // Step 2: Use the token to authenticate the next request
       const response = await fetch(`http://localhost:8081/user/${username}`, {
           method: 'GET',
           headers: {
-              'Authorization': `Bearer ${token}`, // Use the token here
+              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
           }
       })
@@ -57,7 +55,6 @@ const Login = ({ onLoginSuccess }) => {
       console.log(response);
       onLoginSuccess(response);
   
-      // Navigate based on user role
       if (response.role === 'ADMIN') {
           navigate('/admin');
       } else if (response.role === 'STUDENT') {
