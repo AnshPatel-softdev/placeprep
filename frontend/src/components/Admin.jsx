@@ -5,6 +5,7 @@ import AddQuestionModel from './model/addQuestionModel';
 import ShowUserModel from './model/showUserModel';
 import ShowQuestionModel from './model/showQuestionModel';
 import ExcelUploadModel from './model/excelUploadModel';
+import AddExamModel from './model/addExamModel';
 
 const AdminDashboard = ({ user }) => {
     const [activePanel, setActivePanel] = useState(null);
@@ -51,6 +52,15 @@ const AdminDashboard = ({ user }) => {
                     </Button>
                 </div>
 
+                <div className="flex gap-2">
+                    <Button 
+                        onClick={() => togglePanel('scheduleExam')}
+                        variant={activePanel === 'scheduleExam' ? 'secondary' : 'default'}
+                    >
+                        {activePanel === 'scheduleExam' ? 'Cancel' : 'Schedule Exam'}
+                    </Button>
+                </div>
+
                 <Button 
                     onClick={() => togglePanel('showUsers')}
                     variant={activePanel === 'showUsers' ? 'secondary' : 'default'}
@@ -93,6 +103,13 @@ const AdminDashboard = ({ user }) => {
                     <ExcelUploadModel 
                         type="questions"
                         onClose={() => setActivePanel(null)}
+                        user={user}
+                    />
+                )}
+                
+                {activePanel === 'scheduleExam' && (
+                    <AddExamModel 
+                        setShowExamForm={() => setActivePanel(null)}
                         user={user}
                     />
                 )}
