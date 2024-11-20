@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ExamRepository extends JpaRepository<Exam, Long> {
+    public void deleteById(int id);
+    public Exam findById(int id);
 }

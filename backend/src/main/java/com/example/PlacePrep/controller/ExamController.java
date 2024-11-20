@@ -23,4 +23,20 @@ public class ExamController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
+    @GetMapping
+    public ResponseEntity<?> getExams() {
+        return new ResponseEntity<>(examService.getExams(), HttpStatus.OK);
+    }
+
+    @PutMapping("/{examid}")
+    public ResponseEntity<?> updateExam(@RequestBody Exam exam, @PathVariable int examid) {
+        examService.updateExam(exam,examid);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{examid}")
+    public ResponseEntity<?> deleteExam(@PathVariable int examid) {
+        examService.deleteExam(examid);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }

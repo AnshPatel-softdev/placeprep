@@ -15,7 +15,8 @@ import java.time.LocalDate;
 public class Exam {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int examid;
+    @Column(name = "examid")
+    private int id;
 
     @Column(name = "exam_name")
     private String exam_name;

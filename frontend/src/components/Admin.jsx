@@ -6,6 +6,7 @@ import ShowUserModel from './model/showUserModel';
 import ShowQuestionModel from './model/showQuestionModel';
 import ExcelUploadModel from './model/excelUploadModel';
 import AddExamModel from './model/addExamModel';
+import ShowExamModel from './model/showExamModel'; // Import the new component
 
 const AdminDashboard = ({ user }) => {
     const [activePanel, setActivePanel] = useState(null);
@@ -59,21 +60,30 @@ const AdminDashboard = ({ user }) => {
                     >
                         {activePanel === 'scheduleExam' ? 'Cancel' : 'Schedule Exam'}
                     </Button>
+                    
+                    <Button 
+                        onClick={() => togglePanel('showExams')}
+                        variant={activePanel === 'showExams' ? 'secondary' : 'default'}
+                    >
+                        {activePanel === 'showExams' ? 'Cancel' : 'Show Exams'}
+                    </Button>
                 </div>
 
-                <Button 
-                    onClick={() => togglePanel('showUsers')}
-                    variant={activePanel === 'showUsers' ? 'secondary' : 'default'}
-                >
-                    {activePanel === 'showUsers' ? 'Cancel' : 'Show Users'}
-                </Button>
+                <div className="flex gap-2">
+                    <Button 
+                        onClick={() => togglePanel('showUsers')}
+                        variant={activePanel === 'showUsers' ? 'secondary' : 'default'}
+                    >
+                        {activePanel === 'showUsers' ? 'Cancel' : 'Show Users'}
+                    </Button>
 
-                <Button 
-                    onClick={() => togglePanel('showQuestions')}
-                    variant={activePanel === 'showQuestions' ? 'secondary' : 'default'}
-                >
-                    {activePanel === 'showQuestions' ? 'Cancel' : 'Show Questions'}
-                </Button>
+                    <Button 
+                        onClick={() => togglePanel('showQuestions')}
+                        variant={activePanel === 'showQuestions' ? 'secondary' : 'default'}
+                    >
+                        {activePanel === 'showQuestions' ? 'Cancel' : 'Show Questions'}
+                    </Button>
+                </div>
             </div>
 
             <div className="mt-4">
@@ -120,6 +130,10 @@ const AdminDashboard = ({ user }) => {
                 
                 {activePanel === 'showQuestions' && (
                     <ShowQuestionModel user={user} />
+                )}
+
+                {activePanel === 'showExams' && (
+                    <ShowExamModel user={user} />
                 )}
             </div>
         </div>
