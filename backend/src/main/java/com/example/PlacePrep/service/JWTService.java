@@ -40,7 +40,7 @@ public class JWTService {
                 .add(claims)
                 .subject(username)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30))
                 .and()
                 .signWith(getKey())
                 .compact();
@@ -82,4 +82,17 @@ public class JWTService {
         return extractClaim(token, Claims::getExpiration);
     }
 
+    public String generateRefreshToken(String username) {
+        return Jwts.builder()
+                .subject(username)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * 1))
+                .signWith(getKey())
+                .compact();
+    }
+
+    public boolean validateRefreshToken(String token, UserDetails userDetails) {
+        final String username = extractUserName(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
 }

@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/user")
@@ -57,5 +59,18 @@ public class UserController {
     @PostMapping("/login")
     public String login(@RequestBody User user) {
         return userService.verify(user);
+    }
+
+    @PostMapping("/token")
+    public ResponseEntity<?> getTokens(@RequestBody User user) {
+        Map<String, String> tokens = userService.issueTokens(user);
+        return ResponseEntity.ok(tokens);
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<?> refreshAccessToken(@RequestBody Map<String, String> request) {
+        String refreshToken = request.get("refreshToken");
+        String newAccessToken = userService.refreshAccessToken(refreshToken);
+        return ResponseEntity.ok(Collections.singletonMap("accessToken", newAccessToken));
     }
 }

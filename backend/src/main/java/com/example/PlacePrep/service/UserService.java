@@ -2,6 +2,7 @@ package com.example.PlacePrep.service;
 
 
 import com.example.PlacePrep.model.User;
+import com.example.PlacePrep.model.UserPrincipal;
 import com.example.PlacePrep.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
@@ -20,7 +21,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -39,6 +42,7 @@ public class UserService {
 
     public void saveUser(User user) {
         user.setCreated_at(LocalDateTime.now());
+        user.setCollege(user.getCollege().toUpperCase());
         user.setUpdated_at(LocalDateTime.now());
         user.setPassword(encoder.encode(user.getPassword()));
         userRepository.save(user);
@@ -132,5 +136,23 @@ public class UserService {
         } else {
             return "fail";
         }
+    }
+
+    public Map<String, String> issueTokens(User user) {
+        String accessToken = jwtService.generateToken(user.getUsername(), user.getRole());
+        String refreshToken = jwtService.generateRefreshToken(user.getUsername());
+        Map<String, String> tokens = new HashMap<>();
+        tokens.put("accessToken", accessToken);
+        tokens.put("refreshToken", refreshToken);
+        return tokens;
+    }
+
+    public String refreshAccessToken(String refreshToken) {
+        String username = jwtService.extractUserName(refreshToken);
+        User user = getUserByUsername(username);
+        if (user != null && jwtService.validateRefreshToken(refreshToken, new UserPrincipal(user))) {
+            return jwtService.generateToken(user.getUsername(), user.getRole());
+        }
+        throw new RuntimeException("Invalid refresh token");
     }
 }
