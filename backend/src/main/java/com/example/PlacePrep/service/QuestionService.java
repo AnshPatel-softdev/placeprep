@@ -29,17 +29,14 @@ public class QuestionService {
     @Autowired
     private QuestionRepository questionRepository;
 
-    @GetMapping
     public Iterable<Question> getAllQuestions() {
         return questionRepository.findAll();
     }
 
-    @PostMapping
-        public void saveQuestion(Question question) {
+    public void saveQuestion(Question question) {
             questionRepository.save(question);
         }
 
-    @PutMapping
     public void updateQuestion(Question question,int id) {
         Question question1 = questionRepository.findById(id);
         question1.setQuesdesc(question.getQuesdesc());
@@ -53,7 +50,6 @@ public class QuestionService {
         questionRepository.save(question1);
     }
 
-    @DeleteMapping
     public void deleteQuestion(int id) {
         questionRepository.delete(questionRepository.findById(id));
     }

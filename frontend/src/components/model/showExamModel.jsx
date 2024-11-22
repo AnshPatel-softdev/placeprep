@@ -24,6 +24,13 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -46,9 +53,19 @@ const ShowExamModel = ({ user }) => {
     college: '',
     total_marks: '',
     duration: '',
-    created_by: ''
+    created_by: '',
+    branch: '', 
+    semester: 1
   });
+  const branches = [
+    'Computer Engineering', 
+    'Electrical Engineering', 
+    'Mechanical Engineering', 
+    'Civil Engineering', 
+    'Information Technology'
+  ];
 
+  const semesters = ['1', '2', '3', '4', '5', '6', '7', '8'];
   useEffect(() => {
     fetchExams();
   }, []);
@@ -81,6 +98,7 @@ const ShowExamModel = ({ user }) => {
   };
 
   const handleUpdate = async () => {
+    editFormData.semester = parseInt(editFormData.semester)
     try {
       const response = await fetch(`http://localhost:8081/exam/${editFormData.id}`, {
         method: 'PUT',
@@ -144,6 +162,13 @@ const ShowExamModel = ({ user }) => {
     }));
   };
 
+  const handleSelectChange = (name, value) => {
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   const handleDeleteDialog = (exam) => {
     setDeleteExam(exam);
     setShowDeleteDialog(true);
@@ -173,6 +198,8 @@ const ShowExamModel = ({ user }) => {
             <TableRow>
               <TableHead>Exam Name</TableHead>
               <TableHead className="text-center">College</TableHead>
+              <TableHead className="text-center">Branch</TableHead>
+              <TableHead className="text-center">Semester</TableHead>
               <TableHead className="text-center">Start Date</TableHead>
               <TableHead className="text-center">Duration</TableHead>
               <TableHead className="text-center">Actions</TableHead>
@@ -183,6 +210,8 @@ const ShowExamModel = ({ user }) => {
               <TableRow key={exam.id}>
                 <TableCell className="font-medium">{exam.exam_name}</TableCell>
                 <TableCell className="text-center">{exam.college}</TableCell>
+                <TableCell className="text-center">{exam.branch ? exam.branch : 'N/A'}</TableCell>
+                <TableCell className="text-center">{exam.semester ? exam.semester : 'N/A'}</TableCell>
                 <TableCell className="text-center">
                   {formatDateTime(exam.exam_start_date, exam.exam_start_time)}
                 </TableCell>
@@ -257,6 +286,8 @@ const ShowExamModel = ({ user }) => {
                   <h3 className="font-semibold mb-2">Basic Information</h3>
                   <p><span className="font-medium">Exam Name:</span> {selectedExam.exam_name}</p>
                   <p><span className="font-medium">College:</span> {selectedExam.college}</p>
+                  <p><span className="font-medium">Branch:</span> {selectedExam.branch}</p>
+                  <p><span className="font-medium">Semester:</span> {selectedExam.semester}</p>
                   <p><span className="font-medium">Total Questions:</span> {selectedExam.no_of_questions}</p>
                   <p><span className="font-medium">Total Marks:</span> {selectedExam.total_marks}</p>
                   <p><span className="font-medium">Duration:</span> {selectedExam.duration} mins</p>
@@ -371,9 +402,47 @@ const ShowExamModel = ({ user }) => {
                   id="duration"
                   name="duration"
                   type="number"
-                  value={editFormData.duration}
+                  value={editFormData.duration} 
                   onChange={handleInputChange}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="branch">Branch</Label>
+                <Select 
+                  name="branch"
+                  value={editFormData.branch}
+                  onValueChange={(value) => handleSelectChange('branch', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Branch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {branches.map((branch) => (
+                      <SelectItem key={branch} value={branch}>
+                        {branch}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="semester">Semester</Label>
+                <Select 
+                  name="semester"
+                  value={editFormData.semester}
+                  onValueChange={(value) => handleSelectChange('semester', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Semester" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {semesters.map((semester) => (
+                      <SelectItem key={semester} value={semester}>
+                        {semester}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="created_by">Created By</Label>

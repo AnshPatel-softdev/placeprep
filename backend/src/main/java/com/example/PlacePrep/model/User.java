@@ -37,4 +37,13 @@ public class User {
 
     @Column(name = "role")
     private String role;
+
+    @Column(name = "college")
+    private String college;
+
+    @Column(name = "branch")
+    private String branch;
+
+    @Column(name = "semester")
+    private Integer semester;
 }

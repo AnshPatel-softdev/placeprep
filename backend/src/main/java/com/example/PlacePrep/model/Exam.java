@@ -39,6 +39,12 @@ public class Exam {
     @Column(name = "college")
     private String college;
 
+    @Column(name = "branch")
+    private String branch;
+
+    @Column(name = "semester")
+    private Integer semester;
+
     @Column(name = "total_marks")
     private int total_marks;
 

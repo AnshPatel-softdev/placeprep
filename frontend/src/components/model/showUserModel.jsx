@@ -48,7 +48,10 @@ const ShowUserModel = ({user}) => {
     firstname: '',
     lastname: '',
     email: '',
-    role: ''
+    role: '',
+    college: '',
+    branch: '',
+    semester: ''
   });
 
   useEffect(() => {
@@ -90,7 +93,10 @@ const ShowUserModel = ({user}) => {
       firstname: selectedUser.firstname,
       lastname: selectedUser.lastname,
       email: selectedUser.email,
-      role: selectedUser.role
+      role: selectedUser.role,
+      college: selectedUser.college || '',
+      branch: selectedUser.branch || '',
+      semester: selectedUser.semester || ''
     });
     setShowEditDialog(true);
   };
@@ -188,6 +194,9 @@ const ShowUserModel = ({user}) => {
               <TableHead className="text-center">LastName</TableHead>
               <TableHead className="text-center">Email</TableHead>
               <TableHead className="text-center">Role</TableHead>
+              <TableHead className="text-center">College</TableHead>
+              <TableHead className="text-center">Branch</TableHead>
+              <TableHead className="text-center">Semester</TableHead>
               <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -198,6 +207,9 @@ const ShowUserModel = ({user}) => {
                 <TableCell className="font-medium text-center">{user.lastname}</TableCell>
                 <TableCell className="text-center">{user.email}</TableCell>
                 <TableCell className="text-center">{user.role}</TableCell>
+                <TableCell className="text-center">{user.college || 'N/A'}</TableCell>
+                <TableCell className="text-center">{user.branch || 'N/A'}</TableCell>
+                <TableCell className="text-center">{user.semester || 'N/A'}</TableCell>
                 <TableCell className="text-center">
                   <TooltipProvider>
                     <Tooltip>
@@ -316,6 +328,49 @@ const ShowUserModel = ({user}) => {
                 </SelectContent>
               </Select>
             </div>
+
+            {editFormData.role === 'STUDENT' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="college">College</Label>
+                  <Input
+                    id="college"
+                    name="college"
+                    value={editFormData.college}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="branch">Branch</Label>
+                  <Input
+                    id="branch"
+                    name="branch"
+                    value={editFormData.branch}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="semester">Semester</Label>
+                  <Select
+                    value={editFormData.semester}
+                    onValueChange={(value) => handleInputChange({ target: { name: 'semester', value } })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select semester" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                        <SelectItem key={sem} value={sem.toString()}>
+                          Semester {sem}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowEditDialog(false)}>

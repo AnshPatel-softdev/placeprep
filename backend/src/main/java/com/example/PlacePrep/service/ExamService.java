@@ -23,6 +23,7 @@ public class ExamService {
     private ExamRepository examRepository;
 
     public void addExam(Exam exam) {
+        exam.setCollege(exam.getCollege().toUpperCase());
         exam.setCreated_at(LocalDateTime.now());
         exam.setUpdated_at(LocalDateTime.now());
         examRepository.save(exam);
