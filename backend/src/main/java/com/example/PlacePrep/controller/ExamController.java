@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/exam")
-@CrossOrigin(origins = "http://localhost:5173/admin")
+@CrossOrigin(origins = {"http://localhost:5173/admin","http://localhost:5173/student"})
 
 public class ExamController {
 
