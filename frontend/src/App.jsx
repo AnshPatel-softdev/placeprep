@@ -3,12 +3,20 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import Login from './components/Login';
 import AdminDashboard from './components/Admin';
 import StudentDashboard from './components/Student';
+import ExamPagination from './components/ExamPagination';
 
 const App = () => {
   const [currentUser, setCurrentUser] = useState(null);
+  const [currentExam, setCurrentExam] = useState(null);
+  const [currentQuestions, setCurrentQuestions] = useState([]);
 
   const handleNavigation = (user) => {
     setCurrentUser(user);
+  };
+
+  const handleStartExam = (exam, questions) => {
+    setCurrentExam(exam);
+    setCurrentQuestions(questions);
   };
 
   return (
@@ -26,9 +34,24 @@ const App = () => {
           <Route 
             path="/student" 
             element={currentUser?.role === 'STUDENT' ? 
-              <StudentDashboard user={currentUser}/> : 
+              <StudentDashboard 
+                user={currentUser} 
+                onStartExam={handleStartExam} 
+              /> : 
               <Navigate to="/" />
             } 
+          />
+          <Route 
+            path="/exam" 
+            element={currentUser?.role === 'STUDENT' && currentExam ? (
+              <ExamPagination 
+                exam={currentExam} 
+                questions={currentQuestions}
+                user={currentUser}
+              />
+            ) : (
+              <Navigate to="/student" />
+            )} 
           />
         </Routes>
       </Router>

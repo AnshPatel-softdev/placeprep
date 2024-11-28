@@ -14,7 +14,7 @@ import java.io.IOException;
 
 @RestController
 @RequestMapping("/question")
-@CrossOrigin(origins = "http://localhost:5173/admin")
+@CrossOrigin(origins = {"http://localhost:5173/admin","http://localhost:5173/student"})
 public class QuestionController {
 
     @Autowired

@@ -52,8 +52,9 @@ const ShowExamModel = ({ user }) => {
     exam_end_time: '',
     college: '',
     total_marks: '',
+    passing_marks: '',
     duration: '',
-    created_by: '',
+    created_by: user.id ? user.id : 0,
     branch: '', 
     semester: 1
   });
@@ -99,6 +100,10 @@ const ShowExamModel = ({ user }) => {
 
   const handleUpdate = async () => {
     editFormData.semester = parseInt(editFormData.semester)
+    editFormData.passing_marks = parseInt(editFormData.passing_marks)
+    editFormData.total_marks = parseInt(editFormData.total_marks)
+    editFormData.duration = parseInt(editFormData.duration)
+    editFormData.no_of_questions = parseInt(editFormData.no_of_questions)
     try {
       const response = await fetch(`http://localhost:8081/exam/${editFormData.id}`, {
         method: 'PUT',
@@ -290,6 +295,7 @@ const ShowExamModel = ({ user }) => {
                   <p><span className="font-medium">Semester:</span> {selectedExam.semester}</p>
                   <p><span className="font-medium">Total Questions:</span> {selectedExam.no_of_questions}</p>
                   <p><span className="font-medium">Total Marks:</span> {selectedExam.total_marks}</p>
+                  <p><span className="font-medium">Passing Marks:</span> {selectedExam.passing_marks}</p>
                   <p><span className="font-medium">Duration:</span> {selectedExam.duration} mins</p>
                 </div>
                 <div>
@@ -351,7 +357,16 @@ const ShowExamModel = ({ user }) => {
                 />
               </div>
             </div>
-
+            <div className="space-y-2">
+              <Label htmlFor="passing_marks">Passing Marks</Label>
+              <Input
+                id="passing_marks"
+                name="passing_marks"
+                type="number"
+                value={editFormData.passing_marks}
+                onChange={handleInputChange}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="exam_start_date">Start Date</Label>

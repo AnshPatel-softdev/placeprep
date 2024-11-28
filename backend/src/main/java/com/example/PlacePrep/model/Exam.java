@@ -22,7 +22,7 @@ public class Exam {
     private String exam_name;
 
     @Column(name = "no_of_questions")
-    private int no_of_questions;
+    private Integer no_of_questions;
 
     @Column(name = "exam_start_date")
     private LocalDate exam_start_date;
@@ -46,13 +46,16 @@ public class Exam {
     private Integer semester;
 
     @Column(name = "total_marks")
-    private int total_marks;
+    private Integer total_marks;
+
+    @Column(name = "passing_marks")
+    private Integer passing_marks;
 
     @Column(name = "duration")
-    private int duration;
+    private Integer duration;
 
     @Column(name = "created_by")
-    private int created_by;
+    private Integer created_by;
 
     @Column(name = "created_at")
     private LocalDateTime created_at;

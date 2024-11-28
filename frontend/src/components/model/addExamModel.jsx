@@ -22,6 +22,7 @@ const AddExamModel = ({ setShowExamForm, user }) => {
     branch: '',
     semester: 1,
     total_marks: '',
+    passing_marks:'',
     duration: '',
     created_by: user?.id || 0,
   });
@@ -48,6 +49,7 @@ const AddExamModel = ({ setShowExamForm, user }) => {
       branch: examData.branch,
       semester: parseInt(examData.semester),
       total_marks: parseInt(examData.total_marks),
+      passing_marks: parseInt(examData.passing_marks),
       duration: parseInt(examData.duration),
       created_by: user?.id || 0,
       created_at: null,
@@ -83,6 +85,7 @@ const AddExamModel = ({ setShowExamForm, user }) => {
         branch: '',
         semester: 1,
         total_marks: '',
+        passing_marks:'',
         duration: '',
         created_by: user?.id || 0,
       });
@@ -230,6 +233,17 @@ const AddExamModel = ({ setShowExamForm, user }) => {
               placeholder="Total Marks"
               value={examData.total_marks}
               onChange={(e) => setExamData({ ...examData, total_marks: e.target.value })}
+              required
+              min="1"
+            />
+          </div>
+          <div>
+            <label className="block text-sm mb-1">Passing Marks *</label>
+            <Input
+              type="number"
+              placeholder="Passing Marks"
+              value={examData.passing_marks}
+              onChange={(e) => setExamData({ ...examData, passing_marks: e.target.value })}
               required
               min="1"
             />

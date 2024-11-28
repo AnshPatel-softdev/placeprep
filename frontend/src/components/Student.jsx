@@ -1,13 +1,19 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { GraduationCap, ClipboardList, Award } from "lucide-react";
 import ScheduledExams from './model/scheduledExamModel';
 
-const StudentDashboard = ({ user }) => {
+const StudentDashboard = ({ user, onStartExam }) => {
     const [activePanel, setActivePanel] = useState(null);
+    
 
     const togglePanel = (panelName) => {
         setActivePanel(activePanel === panelName ? null : panelName);
+    };
+
+    const handleStartExam = (exam, questions) => {
+        onStartExam(exam, questions);
     };
 
     return (
@@ -77,7 +83,10 @@ const StudentDashboard = ({ user }) => {
             <div className="mt-4">
                 {activePanel === 'showExams' && (
                     <div className="bg-gray-50 rounded-lg p-4">
-                        <ScheduledExams user={user} />
+                    <ScheduledExams 
+                        user={user} 
+                        onStartExam={handleStartExam} 
+                    />
                     </div>
                 )}
                 

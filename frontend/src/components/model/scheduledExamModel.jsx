@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format, isWithinInterval, parseISO } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import {
   Card,
   CardHeader,
@@ -19,13 +20,17 @@ import {
 } from "@/components/ui/table";
 import { Clock, Calendar, School, BookOpen, Award } from "lucide-react";
 
-const ScheduledExams = ({user}) => {
+const ScheduledExams = ({user,onStartExam}) => {
   const [exams, setExams] = useState([]);
+  const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchExams();
+    fetchQuestions();
+    console.log(questions)
   }, []);
 
   const fetchExams = async () => {
@@ -50,6 +55,32 @@ const ScheduledExams = ({user}) => {
     } finally {
       setLoading(false);
     }
+  };
+  const fetchQuestions = async () => {
+    try {
+      const response = await fetch('http://localhost:8081/question', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${user.token}`,
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch questions');
+      }
+      
+      const data = await response.json();
+      setQuestions(data);
+      
+    } catch (err) {
+      console.error('Error fetching questions:', err);
+    }
+  };
+
+  const handleAttemptExam = (exam) => {    
+    onStartExam(exam, questions);
+
+    navigate('/exam');
   };
 
   const combineDateTime = (date, time) => {
@@ -81,10 +112,6 @@ const ScheduledExams = ({user}) => {
     }
   };
 
-  const handleAttemptExam = (examId) => {
-    console.log(`Attempting exam ${examId}`);
-    // Add navigation or exam start logic here
-  };
 
   if (loading) {
     return <div className="text-center p-4">Loading exams...</div>;
@@ -163,6 +190,8 @@ const ScheduledExams = ({user}) => {
                   <TableRow>
                     <TableCell className="font-medium">Questions</TableCell>
                     <TableCell>{exam.no_of_questions}</TableCell>
+                    <TableCell className="font-medium">Passing Marks</TableCell>
+                    <TableCell>{exam.passing_marks}</TableCell>
                     <TableCell className="font-medium">Total Marks</TableCell>
                     <TableCell>{exam.total_marks}</TableCell>
                   </TableRow>
@@ -182,12 +211,12 @@ const ScheduledExams = ({user}) => {
           </CardContent>
 
           <CardFooter>
-            <Button
-              onClick={() => handleAttemptExam(exam.id)}
-              disabled={!isExamAccessible(exam.exam_start_date, exam.exam_start_time, 
-                                       exam.exam_end_date, exam.exam_end_time)}
-              className="w-full"
-            >
+          <Button
+            onClick={() => handleAttemptExam(exam)}
+            disabled={!isExamAccessible(exam.exam_start_date, exam.exam_start_time, 
+                                      exam.exam_end_date, exam.exam_end_time)}
+            className="w-full"
+          >
               {isExamAccessible(exam.exam_start_date, exam.exam_start_time, 
                               exam.exam_end_date, exam.exam_end_time)
                 ? "Attempt Exam"
