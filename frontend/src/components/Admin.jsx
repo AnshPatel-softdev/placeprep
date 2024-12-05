@@ -6,7 +6,8 @@ import ShowUserModel from './model/showUserModel';
 import ShowQuestionModel from './model/showQuestionModel';
 import ExcelUploadModel from './model/excelUploadModel';
 import AddExamModel from './model/addExamModel';
-import ShowExamModel from './model/showExamModel'; // Import the new component
+import ShowExamModel from './model/showExamModel';
+import ShowAttemptedExamsModel from './model/showAttemptedExamModel';
 
 const AdminDashboard = ({ user }) => {
     const [activePanel, setActivePanel] = useState(null);
@@ -83,6 +84,13 @@ const AdminDashboard = ({ user }) => {
                     >
                         {activePanel === 'showQuestions' ? 'Cancel' : 'Show Questions'}
                     </Button>
+
+                    <Button 
+                        onClick={() => togglePanel('showAttemptedExams')}
+                        variant={activePanel === 'showAttemptedExams' ? 'secondary' : 'default'}
+                    >
+                        {activePanel === 'showAttemptedExams' ? 'Cancel' : 'Show Attempted Exams'}
+                    </Button>
                 </div>
             </div>
 
@@ -134,6 +142,10 @@ const AdminDashboard = ({ user }) => {
 
                 {activePanel === 'showExams' && (
                     <ShowExamModel user={user} />
+                )}
+
+                {activePanel === 'showAttemptedExams' && (
+                    <ShowAttemptedExamsModel user={user} />
                 )}
             </div>
         </div>

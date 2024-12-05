@@ -1,7 +1,9 @@
 package com.example.PlacePrep.service;
 
 
+import com.example.PlacePrep.model.AttemptedExams;
 import com.example.PlacePrep.model.Exam;
+import com.example.PlacePrep.repository.AttemptedExamRepository;
 import com.example.PlacePrep.repository.ExamRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,9 @@ public class ExamService {
 
     @Autowired
     private ExamRepository examRepository;
+
+    @Autowired
+    private AttemptedExamRepository attemptedExamRepository;
 
     public void addExam(Exam exam) {
         exam.setCollege(exam.getCollege().toUpperCase());
@@ -50,6 +55,7 @@ public class ExamService {
     }
 
     public void deleteExam(int examid) {
+        attemptedExamRepository.deleteByExamId(examid);
         examRepository.deleteById(examid);
     }
 }
