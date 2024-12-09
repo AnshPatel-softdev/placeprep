@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 public class PlacePrepApplication {
 
-	public static void main(String[] args) {
+	public static void main(String[] args)	 {
 		SpringApplication.run(PlacePrepApplication.class, args);
 	}
 

@@ -3,7 +3,10 @@ package com.example.PlacePrep.service;
 
 import com.example.PlacePrep.model.AttemptedExams;
 import com.example.PlacePrep.model.Exam;
+import com.example.PlacePrep.model.ExamQuestion;
+import com.example.PlacePrep.model.Question;
 import com.example.PlacePrep.repository.AttemptedExamRepository;
+import com.example.PlacePrep.repository.ExamQuestionRepository;
 import com.example.PlacePrep.repository.ExamRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +18,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 @Slf4j
@@ -25,13 +33,35 @@ public class ExamService {
     private ExamRepository examRepository;
 
     @Autowired
+    private ExamQuestionRepository examQuestionRepository;
+    @Autowired
     private AttemptedExamRepository attemptedExamRepository;
 
-    public void addExam(Exam exam) {
+    public void addExam(Exam exam, Iterable<Question> questions) {
         exam.setCollege(exam.getCollege().toUpperCase());
         exam.setCreated_at(LocalDateTime.now());
         exam.setUpdated_at(LocalDateTime.now());
         examRepository.save(exam);
+
+        List<Question> questionList = StreamSupport.stream(questions.spliterator(), false)
+                .collect(Collectors.toList());
+
+        int numberOfQuestions = exam.getNo_of_questions();
+
+        List<Question> randomQuestions = getRandomQuestions(questionList, numberOfQuestions);
+
+        List<ExamQuestion> examQuestions = new ArrayList<>();
+        for (Question question : randomQuestions) {
+            ExamQuestion examQuestion = new ExamQuestion();
+            examQuestion.setExam(exam);
+            examQuestion.setQuestion(question);
+            examQuestion.setCreatedBy(exam.getCreated_by());
+            examQuestion.setCreatedAt(LocalDateTime.now());
+
+            examQuestions.add(examQuestion);
+        }
+
+        examQuestionRepository.saveAll(examQuestions);
     }
 
     public Iterable<Exam> getExams() {
@@ -54,6 +84,25 @@ public class ExamService {
         examRepository.save(exam1);
     }
 
+    private List<Question> getRandomQuestions(List<Question> availableQuestions, int numberOfQuestions) {
+        // Check if we have enough questions
+        if (availableQuestions.size() <= numberOfQuestions) {
+            return availableQuestions;
+        }
+
+        // Create a copy of the list to shuffle
+        List<Question> shuffledQuestions = new ArrayList<>(availableQuestions);
+
+        // Shuffle the questions
+        Collections.shuffle(shuffledQuestions);
+
+        // Return the first 'numberOfQuestions' questions
+        return shuffledQuestions.subList(0, numberOfQuestions);
+    }
+
+    public Iterable<ExamQuestion> getExamQuestions(int examid) {
+        return examQuestionRepository.findByExamId(examid);
+    }
     public void deleteExam(int examid) {
         attemptedExamRepository.deleteByExamId(examid);
         examRepository.deleteById(examid);

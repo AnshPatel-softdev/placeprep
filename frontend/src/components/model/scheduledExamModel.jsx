@@ -29,8 +29,6 @@ const ScheduledExams = ({user,onStartExam}) => {
 
   useEffect(() => {
     fetchExams();
-    fetchQuestions();
-    console.log(questions)
   }, []);
 
   const fetchExams = async () => {
@@ -56,9 +54,9 @@ const ScheduledExams = ({user,onStartExam}) => {
       setLoading(false);
     }
   };
-  const fetchQuestions = async () => {
+  const fetchQuestions = async (id) => {
     try {
-      const response = await fetch('http://localhost:8081/question', {
+      const response = await fetch(`http://localhost:8081/exam/${parseInt(id)}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${user.token}`,
@@ -68,17 +66,18 @@ const ScheduledExams = ({user,onStartExam}) => {
       if (!response.ok) {
         throw new Error('Failed to fetch questions');
       }
-      
       const data = await response.json();
       setQuestions(data);
+      return data;
       
     } catch (err) {
       console.error('Error fetching questions:', err);
     }
   };
 
-  const handleAttemptExam = (exam) => {    
-    onStartExam(exam, questions);
+  const handleAttemptExam = async (exam) => {    
+    const data = await fetchQuestions(exam.id)
+    onStartExam(exam, data);
 
     navigate('/exam');
   };

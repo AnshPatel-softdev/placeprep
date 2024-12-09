@@ -2,7 +2,9 @@ package com.example.PlacePrep.controller;
 
 
 import com.example.PlacePrep.model.Exam;
+import com.example.PlacePrep.model.Question;
 import com.example.PlacePrep.service.ExamService;
+import com.example.PlacePrep.service.QuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,12 +19,20 @@ public class ExamController {
     @Autowired
     private ExamService examService;
 
+    @Autowired
+    private QuestionService questionService;
+
     @PostMapping
     public ResponseEntity<?> addExam(@RequestBody Exam exam) {
-        examService.addExam(exam);
+        Iterable<Question> questions = questionService.getAllQuestions();
+        examService.addExam(exam,questions);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
+    @GetMapping("/{examid}")
+    public ResponseEntity<?> getExamQuestions(@PathVariable int examid) {
+        return new ResponseEntity<>(examService.getExamQuestions(examid), HttpStatus.OK);
+    }
     @GetMapping
     public ResponseEntity<?> getExams() {
         return new ResponseEntity<>(examService.getExams(), HttpStatus.OK);

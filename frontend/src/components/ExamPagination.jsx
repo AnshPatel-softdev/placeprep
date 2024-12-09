@@ -1,31 +1,11 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const ExamPagination = ({ exam, questions, user }) => {
-  // Randomly select questions only once when the component is first loaded
-  const examQuestions = useMemo(() => {
-    // Create a copy of the questions to avoid mutating the original array
-    const questionsCopy = [...questions];
-    const selectedQuestions = [];
-
-    // Ensure we don't select more questions than available
-    const selectCount = Math.min(exam.no_of_questions, questionsCopy.length);
-
-    while (selectedQuestions.length < selectCount) {
-      // Generate a random index
-      const randomIndex = Math.floor(Math.random() * questionsCopy.length);
-      
-      // Remove the selected question and add it to our selected questions
-      const [selectedQuestion] = questionsCopy.splice(randomIndex, 1);
-      selectedQuestions.push(selectedQuestion);
-    }
-
-    return selectedQuestions;
-  }, [questions, exam.no_of_questions]); // Only recompute if questions or number of questions changes
-
+  questions = questions.map(item => item.question);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
   const [answers, setAnswers] = useState({});
@@ -67,6 +47,7 @@ const ExamPagination = ({ exam, questions, user }) => {
   }, [timeRemaining, isExamCompleted]);
 
   useEffect(() => {
+    console.log(questions)
     const preventContextMenu = (e) => {
       e.preventDefault();
       setAlertMessage({
@@ -97,7 +78,7 @@ const ExamPagination = ({ exam, questions, user }) => {
   };
 
   const handleNextQuestion = () => {
-    if (currentQuestionIndex < examQuestions.length - 1) {
+    if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
       setSelectedOption(answers[currentQuestionIndex + 1] || null);
     }
@@ -117,7 +98,7 @@ const ExamPagination = ({ exam, questions, user }) => {
       setIsSubmitting(true);
 
       let correctCount = 0;
-      examQuestions.forEach((question, index) => {
+      questions.forEach((question, index) => {
         if (answers[index] === question.answer) {
           correctCount++;
         }
@@ -143,7 +124,7 @@ const ExamPagination = ({ exam, questions, user }) => {
           second: "2-digit",
         }),
         obtainedMarks: correctCount,
-        totalMarks: examQuestions.length,
+        totalMarks: questions.length,
         passingMarks: exam.passing_marks,
         passingStatus: status,
       };
@@ -157,7 +138,7 @@ const ExamPagination = ({ exam, questions, user }) => {
       setIsExamCompleted(true);
 
       setAlertMessage({
-        message: `You ${status}ed the exam. Marks: ${correctCount}/${examQuestions.length}`, 
+        message: `You ${status}ed the exam. Marks: ${correctCount}/${questions.length}`, 
         type: status === 'Pass' ? 'success' : 'error'
       });
 
@@ -173,7 +154,7 @@ const ExamPagination = ({ exam, questions, user }) => {
     isSubmitting, 
     isExamCompleted, 
     answers, 
-    examQuestions, 
+    questions, 
     exam, 
     user
   ]);
@@ -191,7 +172,7 @@ const ExamPagination = ({ exam, questions, user }) => {
     );
   }
 
-  const currentQuestion = examQuestions[currentQuestionIndex];
+  const currentQuestion = questions[currentQuestionIndex];
 
   return (
     <div className="max-w-2xl mx-auto p-4">
@@ -217,7 +198,7 @@ const ExamPagination = ({ exam, questions, user }) => {
       <Card>
         <CardHeader>
           <CardTitle>
-            Question {currentQuestionIndex + 1} of {examQuestions.length}
+            Question {currentQuestionIndex + 1} of {questions.length}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -243,7 +224,7 @@ const ExamPagination = ({ exam, questions, user }) => {
               </Button>
             )}
             
-            {currentQuestionIndex < examQuestions.length - 1 ? (
+            {currentQuestionIndex < questions.length - 1 ? (
               <Button 
                 onClick={handleNextQuestion} 
                 disabled={!selectedOption}
