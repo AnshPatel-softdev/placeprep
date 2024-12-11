@@ -7,11 +7,13 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ExamQuestionRepository extends JpaRepository<ExamQuestion, Integer> {
 
-    public void deleteById(int id);
+    public void deleteByExamIdAndQuestionId(int examid,int questionid);
 
     public ExamQuestion findById(int id);
 
     public ExamQuestion findByExamIdAndQuestionId(int examId, int questionId);
 
     public Iterable<ExamQuestion> findByExamId(int examId);
+
+    public void deleteByExamId(int examId);
 }

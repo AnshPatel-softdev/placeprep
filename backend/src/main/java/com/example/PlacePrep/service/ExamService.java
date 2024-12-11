@@ -1,7 +1,6 @@
 package com.example.PlacePrep.service;
 
 
-import com.example.PlacePrep.model.AttemptedExams;
 import com.example.PlacePrep.model.Exam;
 import com.example.PlacePrep.model.ExamQuestion;
 import com.example.PlacePrep.model.Question;
@@ -12,10 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -85,26 +80,35 @@ public class ExamService {
     }
 
     private List<Question> getRandomQuestions(List<Question> availableQuestions, int numberOfQuestions) {
-        // Check if we have enough questions
         if (availableQuestions.size() <= numberOfQuestions) {
             return availableQuestions;
         }
 
-        // Create a copy of the list to shuffle
         List<Question> shuffledQuestions = new ArrayList<>(availableQuestions);
 
-        // Shuffle the questions
         Collections.shuffle(shuffledQuestions);
 
-        // Return the first 'numberOfQuestions' questions
         return shuffledQuestions.subList(0, numberOfQuestions);
     }
+    public void deleteExamQuestion(int examid, int questionid) {
+        examQuestionRepository.deleteByExamIdAndQuestionId(examid,questionid);
+    }
 
+    public void addExamQuestion(int examid, Question question) {
+        Exam exam = examRepository.findById(examid);
+        ExamQuestion examQuestion = new ExamQuestion();
+        examQuestion.setExam(exam);
+        examQuestion.setQuestion(question);
+        examQuestion.setCreatedBy(exam.getCreated_by());
+        examQuestion.setCreatedAt(LocalDateTime.now());
+        examQuestionRepository.save(examQuestion);
+    }
     public Iterable<ExamQuestion> getExamQuestions(int examid) {
         return examQuestionRepository.findByExamId(examid);
     }
     public void deleteExam(int examid) {
         attemptedExamRepository.deleteByExamId(examid);
+        examQuestionRepository.deleteByExamId(examid);
         examRepository.deleteById(examid);
     }
 }

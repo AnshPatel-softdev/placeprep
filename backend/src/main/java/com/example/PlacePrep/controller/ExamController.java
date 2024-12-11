@@ -43,7 +43,17 @@ public class ExamController {
         examService.updateExam(exam,examid);
         return new ResponseEntity<>(HttpStatus.OK);
     }
+    @DeleteMapping("/{examid}/{questionid}")
+    public ResponseEntity<?> deleteExamQuestion(@PathVariable int examid, @PathVariable int questionid) {
+        examService.deleteExamQuestion(examid,questionid);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 
+    @PostMapping("/{examid}")
+    public ResponseEntity<?> addExamQuestion(@PathVariable int examid, @RequestBody Question question) {
+        examService.addExamQuestion(examid,question);
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
     @DeleteMapping("/{examid}")
     public ResponseEntity<?> deleteExam(@PathVariable int examid) {
         examService.deleteExam(examid);

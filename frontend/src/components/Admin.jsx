@@ -8,6 +8,7 @@ import ExcelUploadModel from './model/excelUploadModel';
 import AddExamModel from './model/addExamModel';
 import ShowExamModel from './model/showExamModel';
 import ShowAttemptedExamsModel from './model/showAttemptedExamModel';
+import ExamManagement from './model/examManagementModel'; // Import the new Exam Management component
 
 const AdminDashboard = ({ user }) => {
     const [activePanel, setActivePanel] = useState(null);
@@ -67,6 +68,14 @@ const AdminDashboard = ({ user }) => {
                         variant={activePanel === 'showExams' ? 'secondary' : 'default'}
                     >
                         {activePanel === 'showExams' ? 'Cancel' : 'Show Exams'}
+                    </Button>
+
+                    {/* New Exam Management Button */}
+                    <Button 
+                        onClick={() => togglePanel('examManagement')}
+                        variant={activePanel === 'examManagement' ? 'secondary' : 'default'}
+                    >
+                        {activePanel === 'examManagement' ? 'Cancel' : 'Exam Management'}
                     </Button>
                 </div>
 
@@ -146,6 +155,11 @@ const AdminDashboard = ({ user }) => {
 
                 {activePanel === 'showAttemptedExams' && (
                     <ShowAttemptedExamsModel user={user} />
+                )}
+
+                {/* New Exam Management Panel */}
+                {activePanel === 'examManagement' && (
+                    <ExamManagement user = {user}/>
                 )}
             </div>
         </div>
