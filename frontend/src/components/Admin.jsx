@@ -8,7 +8,8 @@ import ExcelUploadModel from './model/excelUploadModel';
 import AddExamModel from './model/addExamModel';
 import ShowExamModel from './model/showExamModel';
 import ShowAttemptedExamsModel from './model/showAttemptedExamModel';
-import ExamManagement from './model/examManagementModel'; // Import the new Exam Management component
+import ExamManagement from './model/examManagementModel';
+import ShowAttemptedQuestionsModel from './model/showAttemptedQuestionModel';
 
 const AdminDashboard = ({ user }) => {
     const [activePanel, setActivePanel] = useState(null);
@@ -70,7 +71,6 @@ const AdminDashboard = ({ user }) => {
                         {activePanel === 'showExams' ? 'Cancel' : 'Show Exams'}
                     </Button>
 
-                    {/* New Exam Management Button */}
                     <Button 
                         onClick={() => togglePanel('examManagement')}
                         variant={activePanel === 'examManagement' ? 'secondary' : 'default'}
@@ -99,6 +99,13 @@ const AdminDashboard = ({ user }) => {
                         variant={activePanel === 'showAttemptedExams' ? 'secondary' : 'default'}
                     >
                         {activePanel === 'showAttemptedExams' ? 'Cancel' : 'Show Attempted Exams'}
+                    </Button>
+
+                    <Button 
+                        onClick={() => togglePanel('showAttemptedQuestion')}
+                        variant={activePanel === 'showAttemptedQuestion' ? 'secondary' : 'default'}
+                    >
+                        {activePanel === 'showAttemptedQuestion' ? 'Cancel' : 'Show Attempted Questions'}
                     </Button>
                 </div>
             </div>
@@ -157,9 +164,12 @@ const AdminDashboard = ({ user }) => {
                     <ShowAttemptedExamsModel user={user} />
                 )}
 
-                {/* New Exam Management Panel */}
                 {activePanel === 'examManagement' && (
                     <ExamManagement user = {user}/>
+                )}
+
+                {activePanel === 'showAttemptedQuestion' && (
+                    <ShowAttemptedQuestionsModel user={user} />
                 )}
             </div>
         </div>

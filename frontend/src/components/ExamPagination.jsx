@@ -47,7 +47,6 @@ const ExamPagination = ({ exam, questions, user }) => {
   }, [timeRemaining, isExamCompleted]);
 
   useEffect(() => {
-    console.log(questions)
     const preventContextMenu = (e) => {
       e.preventDefault();
       setAlertMessage({
@@ -63,13 +62,71 @@ const ExamPagination = ({ exam, questions, user }) => {
     };
   }, []);
 
+  const saveQuestionAttempt = async (questionId, selectedOption) => {
+    try {
+      console.log(user)
+  console.log(questions)
+  console.log(exam)
+  console.log(selectedOption)
+      const attemptData = {
+        userId: parseInt(user.id),
+        examId: parseInt(exam.id),
+        questionId: questionId,
+        selectedOption: selectedOption
+      };
+
+      await axios.post('http://localhost:8081/attempted_question', attemptData, {
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
+    } catch (error) {
+      console.error('Failed to save question attempt:', error);
+      setAlertMessage({
+        message: "Failed to save question attempt.",
+        type: 'error'
+      });
+    }
+  };
+
+  const updateQuestionAttempt = async (questionId, selectedOption) => {
+    try {
+      const updateData = {
+        userId: parseInt(user.id),
+        examId: parseInt(exam.id),
+        questionId: questionId,
+        selectedOption: selectedOption
+      };
+
+      await axios.put('http://localhost:8081/attempted_question', updateData, {
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
+    } catch (error) {
+      console.error('Failed to update question attempt:', error);
+      setAlertMessage({
+        message: "Failed to update question attempt.",
+        type: 'error'
+      });
+    }
+  };
+
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const handleOptionSelect = (option) => {
+  const handleOptionSelect = async (option) => {
+    const currentQuestion = questions[currentQuestionIndex];
+    
+    if (!answers[currentQuestionIndex]) {
+      await saveQuestionAttempt(currentQuestion.id, option);
+    } else if (answers[currentQuestionIndex] !== option) {
+      await updateQuestionAttempt(currentQuestion.id, option);
+    }
+
     setSelectedOption(option);
     setAnswers(prev => ({
       ...prev,
