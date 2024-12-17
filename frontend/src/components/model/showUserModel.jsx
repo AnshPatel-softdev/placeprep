@@ -39,8 +39,16 @@ const ShowUserModel = ({user}) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [deleteUser,setDeleteUser] = useState(null)
+  const [deleteUser, setDeleteUser] = useState(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const [filters, setFilters] = useState({
+    username: '',
+    role: 'ALL',
+    college: '',
+    branch: ''
+  });
+
   const [editFormData, setEditFormData] = useState({
     id: '',
     username: '',
@@ -53,6 +61,8 @@ const ShowUserModel = ({user}) => {
     branch: '',
     semester: ''
   });
+
+  const roles = ['ADMIN', 'STUDENT'];
 
   useEffect(() => {
     fetchUsers();
@@ -85,11 +95,31 @@ const ShowUserModel = ({user}) => {
     }
   };
 
+  const handleFilterChange = (filterName, value) => {
+    setFilters(prevFilters => ({
+      ...prevFilters,
+      [filterName]: value
+    }));
+  };
+
+  const filteredUsers = users.filter(user => {
+    return (
+      (filters.username === '' || 
+        user.username.toLowerCase().includes(filters.username.toLowerCase())) &&
+      (filters.role === 'ALL' || 
+        user.role?.toLowerCase() === filters.role.toLowerCase()) &&
+      (filters.college === '' || 
+        user.college?.toLowerCase().includes(filters.college.toLowerCase())) &&
+      (filters.branch === '' || 
+        user.branch?.toLowerCase().includes(filters.branch.toLowerCase()))
+    );
+  });
+
   const handleEdit = (selectedUser) => {
     setEditFormData({
       id: selectedUser.id,
       username: selectedUser.username,
-      password: '', // Empty for security
+      password: '',
       firstname: selectedUser.firstname,
       lastname: selectedUser.lastname,
       email: selectedUser.email,
@@ -105,6 +135,7 @@ const ShowUserModel = ({user}) => {
     setDeleteUser(user)
     setShowDeleteDialog(true)
   }
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setEditFormData(prev => ({
@@ -115,7 +146,6 @@ const ShowUserModel = ({user}) => {
 
   const handleUpdate = async () => {
     try {
-      // Create update payload - omit password if empty
       const updateData = {
         ...editFormData,
         ...(editFormData.password ? { password: editFormData.password } : {})
@@ -134,7 +164,6 @@ const ShowUserModel = ({user}) => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Update local state
       setUsers(users.map(u => 
         u.id === editFormData.id ? { ...u, ...updateData } : u
       ));
@@ -168,10 +197,12 @@ const ShowUserModel = ({user}) => {
       setError('Failed to delete user. Please try again.');
     }
   };
+
   const handleClose = () => {
     setDeleteUser({})
     setShowDeleteDialog(false)
   }
+
   if (loading) {
     return <div className="p-4">Loading users...</div>;
   }
@@ -185,6 +216,40 @@ const ShowUserModel = ({user}) => {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
+      
+      <div className="grid grid-cols-4 gap-4 mb-4">
+        <Input 
+          placeholder="Username" 
+          value={filters.username}
+          onChange={(e) => handleFilterChange('username', e.target.value)}
+        />
+        <Select 
+          value={filters.role}
+          onValueChange={(value) => handleFilterChange('role', value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Role" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Roles</SelectItem>
+            {roles.map((role) => (
+              <SelectItem key={role} value={role}>
+                {role}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Input 
+          placeholder="College" 
+          value={filters.college}
+          onChange={(e) => handleFilterChange('college', e.target.value)}
+        />
+        <Input 
+          placeholder="Branch" 
+          value={filters.branch}
+          onChange={(e) => handleFilterChange('branch', e.target.value)}
+        />
+      </div>
       
       <div className="rounded-md border">
         <Table>
@@ -201,57 +266,64 @@ const ShowUserModel = ({user}) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium text-center">{user.firstname}</TableCell>
-                <TableCell className="font-medium text-center">{user.lastname}</TableCell>
-                <TableCell className="text-center">{user.email}</TableCell>
-                <TableCell className="text-center">{user.role}</TableCell>
-                <TableCell className="text-center">{user.college || 'N/A'}</TableCell>
-                <TableCell className="text-center">{user.branch || 'N/A'}</TableCell>
-                <TableCell className="text-center">{user.semester || 'N/A'}</TableCell>
-                <TableCell className="text-center">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleEdit(user)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Edit user</p>
-                      </TooltipContent>
-                    </Tooltip>  
-
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-500 hover:text-red-600"
-                          onClick={() => handleDeleteDialog(user)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Delete user</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+            {filteredUsers.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan="8" className="text-center text-gray-500">
+                  No users match the current filters.
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              filteredUsers.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium text-center">{user.firstname}</TableCell>
+                  <TableCell className="font-medium text-center">{user.lastname}</TableCell>
+                  <TableCell className="text-center">{user.email}</TableCell>
+                  <TableCell className="text-center">{user.role}</TableCell>
+                  <TableCell className="text-center">{user.college || 'N/A'}</TableCell>
+                  <TableCell className="text-center">{user.branch || 'N/A'}</TableCell>
+                  <TableCell className="text-center">{user.semester || 'N/A'}</TableCell>
+                  <TableCell className="text-center">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleEdit(user)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Edit user</p>
+                        </TooltipContent>
+                      </Tooltip>  
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-500 hover:text-red-600"
+                            onClick={() => handleDeleteDialog(user)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Delete user</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
 
-      {/* Edit User Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>

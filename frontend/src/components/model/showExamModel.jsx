@@ -43,6 +43,16 @@ const ShowExamModel = ({ user }) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [deleteExam, setDeleteExam] = useState(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
+  // Filter states
+  const [filters, setFilters] = useState({
+    examName: '',
+    college: '',
+    branch: '',
+    semester: 'ALL',
+    startDate: ''
+  });
+
   const [editFormData, setEditFormData] = useState({
     exam_name: '',
     no_of_questions: '',
@@ -58,6 +68,7 @@ const ShowExamModel = ({ user }) => {
     branch: '', 
     semester: 1
   });
+
   const branches = [
     'Computer Engineering', 
     'Electrical Engineering', 
@@ -67,6 +78,7 @@ const ShowExamModel = ({ user }) => {
   ];
 
   const semesters = ['1', '2', '3', '4', '5', '6', '7', '8'];
+
   useEffect(() => {
     fetchExams();
   }, []);
@@ -97,6 +109,28 @@ const ShowExamModel = ({ user }) => {
       setLoading(false);
     }
   };
+
+  const handleFilterChange = (filterName, value) => {
+    setFilters(prevFilters => ({
+      ...prevFilters,
+      [filterName]: value
+    }));
+  };
+
+  const filteredExams = exams.filter(exam => {
+    return (
+      (filters.examName === '' || 
+        exam.exam_name?.toLowerCase().includes(filters.examName.toLowerCase())) &&
+      (filters.college === '' || 
+        exam.college?.toLowerCase().includes(filters.college.toLowerCase())) &&
+      (filters.branch === '' || 
+        exam.branch?.toLowerCase().includes(filters.branch.toLowerCase())) &&
+      (filters.semester === 'ALL' || 
+        exam.semester?.toString() === filters.semester) &&
+      (filters.startDate === '' || 
+        exam.exam_start_date?.includes(filters.startDate))
+    );
+  });
 
   const handleUpdate = async () => {
     editFormData.semester = parseInt(editFormData.semester)
@@ -197,6 +231,46 @@ const ShowExamModel = ({ user }) => {
         </Alert>
       )}
       
+      <div className="grid grid-cols-5 gap-4 mb-4">
+        <Input 
+          placeholder="Exam Name" 
+          value={filters.examName}
+          onChange={(e) => handleFilterChange('examName', e.target.value)}
+        />
+        <Input 
+          placeholder="College" 
+          value={filters.college}
+          onChange={(e) => handleFilterChange('college', e.target.value)}
+        />
+        <Input 
+          placeholder="Branch" 
+          value={filters.branch}
+          onChange={(e) => handleFilterChange('branch', e.target.value)}
+        />
+        <Select 
+          value={filters.semester}
+          onValueChange={(value) => handleFilterChange('semester', value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Semester" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Semesters</SelectItem>
+            {semesters.map((semester) => (
+              <SelectItem key={semester} value={semester}>
+                {semester}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Input 
+          type="date"
+          placeholder="Start Date" 
+          value={filters.startDate}
+          onChange={(e) => handleFilterChange('startDate', e.target.value)}
+        />
+      </div>
+      
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -211,74 +285,81 @@ const ShowExamModel = ({ user }) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {exams.map((exam) => (
-              <TableRow key={exam.id}>
-                <TableCell className="font-medium">{exam.exam_name}</TableCell>
-                <TableCell className="text-center">{exam.college}</TableCell>
-                <TableCell className="text-center">{exam.branch ? exam.branch : 'N/A'}</TableCell>
-                <TableCell className="text-center">{exam.semester ? exam.semester : 'N/A'}</TableCell>
-                <TableCell className="text-center">
-                  {formatDateTime(exam.exam_start_date, exam.exam_start_time)}
-                </TableCell>
-                <TableCell className="text-center">{exam.duration} mins</TableCell>
-                <TableCell className="text-center">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 mr-2"
-                          onClick={() => handleViewDetails(exam)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>View details</p>
-                      </TooltipContent>
-                    </Tooltip>
-
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 mr-2"
-                          onClick={() => handleEdit(exam)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Edit exam</p>
-                      </TooltipContent>
-                    </Tooltip>
-
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-500 hover:text-red-600"
-                          onClick={() => handleDeleteDialog(exam)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Delete exam</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+            {filteredExams.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan="7" className="text-center text-gray-500">
+                  No exams match the current filters.
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              filteredExams.map((exam) => (
+                <TableRow key={exam.id}>
+                  <TableCell className="font-medium">{exam.exam_name}</TableCell>
+                  <TableCell className="text-center">{exam.college}</TableCell>
+                  <TableCell className="text-center">{exam.branch ? exam.branch : 'N/A'}</TableCell>
+                  <TableCell className="text-center">{exam.semester ? exam.semester : 'N/A'}</TableCell>
+                  <TableCell className="text-center">
+                    {formatDateTime(exam.exam_start_date, exam.exam_start_time)}
+                  </TableCell>
+                  <TableCell className="text-center">{exam.duration} mins</TableCell>
+                  <TableCell className="text-center">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 mr-2"
+                            onClick={() => handleViewDetails(exam)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>View details</p>
+                        </TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 mr-2"
+                            onClick={() => handleEdit(exam)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Edit exam</p>
+                        </TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-500 hover:text-red-600"
+                            onClick={() => handleDeleteDialog(exam)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Delete exam</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
 
-      {/* Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -310,7 +391,6 @@ const ShowExamModel = ({ user }) => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -481,7 +561,6 @@ const ShowExamModel = ({ user }) => {
         </DialogContent>
       </Dialog>
         
-      {/* Delete Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent className="bg-white text-black p-0 overflow-hidden">
           <DialogHeader className="pt-8 px-6">

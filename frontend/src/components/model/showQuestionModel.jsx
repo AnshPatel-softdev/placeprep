@@ -44,6 +44,13 @@ const ShowQuestionModel = ({user}) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [deletequestion,setDeleteQuestion] = useState(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
+  const [filters, setFilters] = useState({
+    id: '',
+    type: 'ALL',
+    difficulty: 'ALL'
+  });
+
   const [editFormData, setEditFormData] = useState({
     quesdesc: '',
     option1: '',
@@ -54,6 +61,9 @@ const ShowQuestionModel = ({user}) => {
     type: '',
     difficulty: ''
   });
+
+  const types = ['Technical', 'Logical'];
+  const difficulties = ['Easy', 'Medium', 'Hard'];
 
   useEffect(() => {
     fetchQuestions();
@@ -85,6 +95,24 @@ const ShowQuestionModel = ({user}) => {
       setLoading(false);
     }
   };
+
+  const handleFilterChange = (filterName, value) => {
+    setFilters(prevFilters => ({
+      ...prevFilters,
+      [filterName]: value
+    }));
+  };
+
+  const filteredQuestions = questions.filter(question => {
+    return (
+      (filters.id === '' || 
+        question.id.toString().includes(filters.id)) &&
+      (filters.type === 'ALL' || 
+        question.type?.toLowerCase() === filters.type.toLowerCase()) &&
+      (filters.difficulty === 'ALL' || 
+        question.difficulty?.toLowerCase() === filters.difficulty.toLowerCase())
+    );
+  });
 
   const handleUpdate = async () => {
     try {
@@ -192,6 +220,46 @@ const ShowQuestionModel = ({user}) => {
         </Alert>
       )}
       
+      <div className="grid grid-cols-3 gap-4 mb-4">
+        <Input 
+          placeholder="Question ID" 
+          value={filters.id}
+          onChange={(e) => handleFilterChange('id', e.target.value)}
+        />
+        <Select 
+          value={filters.type}
+          onValueChange={(value) => handleFilterChange('type', value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Question Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Types</SelectItem>
+            {types.map((type) => (
+              <SelectItem key={type} value={type}>
+                {type}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select 
+          value={filters.difficulty}
+          onValueChange={(value) => handleFilterChange('difficulty', value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Difficulty" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Difficulties</SelectItem>
+            {difficulties.map((difficulty) => (
+              <SelectItem key={difficulty} value={difficulty}>
+                {difficulty}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -203,73 +271,80 @@ const ShowQuestionModel = ({user}) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {questions.map((question) => (
-              <TableRow key={question.id}>
-                <TableCell className="font-medium max-w-md truncate">
-                  {question.quesdesc}
-                </TableCell>
-                <TableCell className="text-center">{question.type}</TableCell>
-                <TableCell className={`text-center ${getDifficultyColor(question.difficulty)}`}>
-                  {question.difficulty}
-                </TableCell>
-                <TableCell className="text-center">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 mr-2"
-                          onClick={() => handleViewDetails(question)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>View details</p>
-                      </TooltipContent>
-                    </Tooltip>
-
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 mr-2"
-                          onClick={() => handleEdit(question)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Edit question</p>
-                      </TooltipContent>
-                    </Tooltip>
-
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-500 hover:text-red-600"
-                          onClick={() => handleDeleteDialog(question)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Delete question</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+            {filteredQuestions.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan="4" className="text-center text-gray-500">
+                  No questions match the current filters.
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              filteredQuestions.map((question) => (
+                <TableRow key={question.id}>
+                  <TableCell className="font-medium max-w-md truncate">
+                    {question.quesdesc}
+                  </TableCell>
+                  <TableCell className="text-center">{question.type}</TableCell>
+                  <TableCell className={`text-center ${getDifficultyColor(question.difficulty)}`}>
+                    {question.difficulty}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 mr-2"
+                            onClick={() => handleViewDetails(question)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>View details</p>
+                        </TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 mr-2"
+                            onClick={() => handleEdit(question)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Edit question</p>
+                        </TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-500 hover:text-red-600"
+                            onClick={() => handleDeleteDialog(question)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Delete question</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
 
-      {/* Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -307,7 +382,6 @@ const ShowQuestionModel = ({user}) => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -412,7 +486,6 @@ const ShowQuestionModel = ({user}) => {
         </DialogContent>
       </Dialog>
         
-      {/* Delete Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
       <DialogContent className="bg-white text-black p-0 overflow-hidden">
         <DialogHeader className="pt-8 px-6">
