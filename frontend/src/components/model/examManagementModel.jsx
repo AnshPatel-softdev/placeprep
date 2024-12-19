@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from "@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Trash2, Plus, Loader2, AlertCircle, Eye } from 'lucide-react';
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const ExamManagement = ({user}) => {
   const [exams, setExams] = useState([]);
@@ -20,6 +22,16 @@ const ExamManagement = ({user}) => {
   const [showAddQuestionDialog, setShowAddQuestionDialog] = useState(false);
   const [selectedQuestions, setSelectedQuestions] = useState([]);
   const [viewQuestionDetails, setViewQuestionDetails] = useState(null);
+
+  const [filters, setFilters] = useState({
+    id: '',
+    type: 'ALL',
+    difficulty: 'ALL',
+    source: 'EXAM'
+  });
+
+  const types = ['Technical', 'Logical'];
+  const difficulties = ['Easy', 'Medium', 'Hard'];
 
   const fetchExams = async () => {
     setIsLoading(true);
@@ -68,6 +80,38 @@ const ExamManagement = ({user}) => {
       setIsLoading(false);
     }
   };
+
+  const handleFilterChange = (filterName, value, source = filters.source) => {
+    setFilters(prevFilters => ({
+      ...prevFilters,
+      [filterName]: value,
+      source: source
+    }));
+  };
+
+  const filteredExamQuestions = questions.filter(question => {
+    return (
+      (filters.source !== 'EXAM' || filters.id === '' || 
+        question.id.toString().includes(filters.id)) &&
+      (filters.source !== 'EXAM' || filters.type === 'ALL' || 
+        question.type?.toLowerCase() === filters.type.toLowerCase()) &&
+      (filters.source !== 'EXAM' || filters.difficulty === 'ALL' || 
+        question.difficulty?.toLowerCase() === filters.difficulty.toLowerCase())
+    );
+  });
+
+  const filteredAvailableQuestions = allQuestions
+    .filter(q => !questions.some(eq => eq.id === q.id))
+    .filter(question => {
+      return (
+        (filters.source !== 'ADD' || filters.id === '' || 
+          question.id.toString().includes(filters.id)) &&
+        (filters.source !== 'ADD' || filters.type === 'ALL' || 
+          question.type?.toLowerCase() === filters.type.toLowerCase()) &&
+        (filters.source !== 'ADD' || filters.difficulty === 'ALL' || 
+          question.difficulty?.toLowerCase() === filters.difficulty.toLowerCase())
+      );
+    });
 
   const handleExamSelect = (exam) => {
     setSelectedExam(exam);
@@ -138,13 +182,26 @@ const ExamManagement = ({user}) => {
     );
   };
 
+  const getDifficultyColor = (difficulty) => {
+    switch (difficulty.toLowerCase()) {
+      case 'easy':
+        return 'text-green-600';
+      case 'medium':
+        return 'text-yellow-600';
+      case 'hard':
+        return 'text-red-600';
+      default:
+        return '';
+    }
+  };
+
   useEffect(() => {
     fetchExams();
     fetchAllQuestions();
   }, []);
 
   return (
-    <div className="flex">
+    <div className="flex flex-col">
       {error && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
@@ -153,36 +210,77 @@ const ExamManagement = ({user}) => {
         </Alert>
       )}
 
-      <Card className="w-1/3 mr-4">
-        <CardHeader>
-          <CardTitle>Scheduled Exams</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center items-center">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          ) : (
-            exams.map(exam => (
-              <Button 
-                key={exam.id} 
-                variant="outline" 
-                className="w-full mb-2"
-                onClick={() => handleExamSelect(exam)}
-              >
-                {exam.exam_name} - {exam.college}
-              </Button>
-            ))
-          )}
-        </CardContent>
-      </Card>
+      <div className="flex">
+        <Card className="w-1/3 mr-4">
+          <CardHeader>
+            <CardTitle>Scheduled Exams</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex justify-center items-center">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : (
+              exams.map(exam => (
+                <Button 
+                  key={exam.id} 
+                  variant="outline" 
+                  className="w-full mb-2"
+                  onClick={() => handleExamSelect(exam)}
+                >
+                  {exam.exam_name} - {exam.college}
+                </Button>
+              ))
+            )}
+          </CardContent>
+        </Card>
 
-      {selectedExam && (
+        {selectedExam && (
         <Card className="w-2/3">
           <CardHeader>
             <CardTitle>{selectedExam.exam_name} Questions</CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <Input 
+                placeholder="Question ID" 
+                value={filters.id}
+                onChange={(e) => handleFilterChange('id', e.target.value, 'EXAM')}
+              />
+              <Select 
+                value={filters.type}
+                onValueChange={(value) => handleFilterChange('type', value, 'EXAM')}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Question Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Types</SelectItem>
+                  {types.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select 
+                value={filters.difficulty}
+                onValueChange={(value) => handleFilterChange('difficulty', value, 'EXAM')}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Difficulty" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Difficulties</SelectItem>
+                  {difficulties.map((difficulty) => (
+                    <SelectItem key={difficulty} value={difficulty}>
+                      {difficulty}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <Table>
               <TableHeader>
                 <TableRow>
@@ -193,80 +291,90 @@ const ExamManagement = ({user}) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {questions.map(question => (
-                  <TableRow key={question.id}>
-                    <TableCell>{question.quesdesc}</TableCell>
-                    <TableCell>{question.type}</TableCell>
-                    <TableCell>{question.difficulty}</TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="ghost"
-                        size="icon"
-                        className="mr-2"
-                        onClick={() => openQuestionDetails(question)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="destructive" 
-                        size="icon"
-                        onClick={() => openDeleteDialog(question)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                {filteredExamQuestions.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan="4" className="text-center text-gray-500">
+                      No questions match the current filters.
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                ) : (
+                  filteredExamQuestions.map(question => (
+                      <TableRow key={question.id}>
+                        <TableCell>{question.quesdesc}</TableCell>
+                        <TableCell>{question.type}</TableCell>
+                        <TableCell className={getDifficultyColor(question.difficulty)}>
+                          {question.difficulty}
+                        </TableCell>
+                        <TableCell>
+                          <Button 
+                            variant="ghost"
+                            size="icon"
+                            className="mr-2"
+                            onClick={() => openQuestionDetails(question)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            size="icon"
+                            onClick={() => openDeleteDialog(question)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
 
-            <div className="flex space-x-4 mt-4">
-              <Button onClick={() => setShowAddQuestionDialog(true)}>
-                <Plus className="mr-2 h-4 w-4" /> Add Existing Questions
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              <div className="flex space-x-4 mt-4">
+                <Button onClick={() => setShowAddQuestionDialog(true)}>
+                  <Plus className="mr-2 h-4 w-4" /> Add Existing Questions
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-  <DialogContent
-    className="bg-white text-black p-6 rounded-md shadow-lg"
-    style={{ maxWidth: "600px", width: "90%" }}
-  >
-    <DialogHeader>
-      <DialogTitle className="text-xl font-semibold text-center">
-        Delete Question
-      </DialogTitle>
-      <DialogDescription className="text-sm text-zinc-600 mt-4 text-center">
-        Are you sure you want to delete this question? <br />
-        <span
-          className="block mt-4 text-indigo-500 font-medium"
-          style={{ wordWrap: "break-word" }} 
+        <DialogContent
+          className="bg-white text-black p-6 rounded-md shadow-lg"
+          style={{ maxWidth: "600px", width: "90%" }}
         >
-          {deleteQuestion?.quesdesc}
-        </span>
-      </DialogDescription>
-    </DialogHeader>
-    <DialogFooter className="mt-6 flex justify-end gap-4">
-      <Button
-        onClick={() => setShowDeleteDialog(false)}
-        variant="ghost"
-        className="px-5 py-2"
-      >
-        Cancel
-      </Button>
-      <Button
-        variant="destructive"
-        onClick={handleDeleteQuestion}
-        className="px-5 py-2"
-      >
-        Confirm
-      </Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
-
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-center">
+              Delete Question
+            </DialogTitle>
+            <DialogDescription className="text-sm text-zinc-600 mt-4 text-center">
+              Are you sure you want to delete this question? <br />
+              <span
+                className="block mt-4 text-indigo-500 font-medium"
+                style={{ wordWrap: "break-word" }} 
+              >
+                {deleteQuestion?.quesdesc}
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-6 flex justify-end gap-4">
+            <Button
+              onClick={() => setShowDeleteDialog(false)}
+              variant="ghost"
+              className="px-5 py-2"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteQuestion}
+              className="px-5 py-2"
+            >
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showAddQuestionDialog} onOpenChange={setShowAddQuestionDialog}>
         <DialogContent className="max-w-4xl h-[600px] flex flex-col">
@@ -276,6 +384,46 @@ const ExamManagement = ({user}) => {
               Select questions to add to {selectedExam?.exam_name}
             </DialogDescription>
           </DialogHeader>
+
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <Input 
+              placeholder="Question ID" 
+              value={filters.id}
+              onChange={(e) => handleFilterChange('id', e.target.value, 'ADD')}
+            />
+            <Select 
+              value={filters.type}
+              onValueChange={(value) => handleFilterChange('type', value, 'ADD')}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Question Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Types</SelectItem>
+                {types.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select 
+              value={filters.difficulty}
+              onValueChange={(value) => handleFilterChange('difficulty', value, 'ADD')}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Difficulty" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Difficulties</SelectItem>
+                {difficulties.map((difficulty) => (
+                  <SelectItem key={difficulty} value={difficulty}>
+                    {difficulty}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="flex-grow overflow-auto">
             <Table>
@@ -289,9 +437,7 @@ const ExamManagement = ({user}) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {allQuestions
-                  .filter(q => !questions.some(eq => eq.id === q.id))
-                  .map(question => (
+                {filteredAvailableQuestions.map(question => (
                   <TableRow key={question.id}>
                     <TableCell>
                       <Checkbox 
