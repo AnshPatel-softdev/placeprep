@@ -2,8 +2,10 @@ package com.example.PlacePrep.controller;
 
 
 import com.example.PlacePrep.model.Exam;
+import com.example.PlacePrep.model.ProgrammingQuestion;
 import com.example.PlacePrep.model.Question;
 import com.example.PlacePrep.service.ExamService;
+import com.example.PlacePrep.service.ProgrammingQuestionService;
 import com.example.PlacePrep.service.QuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,16 +24,25 @@ public class ExamController {
     @Autowired
     private QuestionService questionService;
 
+    @Autowired
+    private ProgrammingQuestionService programmingQuestionService;
+
     @PostMapping
     public ResponseEntity<?> addExam(@RequestBody Exam exam) {
         Iterable<Question> questions = questionService.getAllQuestions();
-        examService.addExam(exam,questions);
+        Iterable<ProgrammingQuestion> programmingQuestions = programmingQuestionService.getAllProgrammingQuestions();
+        examService.addExam(exam,questions,programmingQuestions);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @GetMapping("/{examid}")
     public ResponseEntity<?> getExamQuestions(@PathVariable int examid) {
         return new ResponseEntity<>(examService.getExamQuestions(examid), HttpStatus.OK);
+    }
+
+    @GetMapping("/programming/{examid}")
+    public ResponseEntity<?> getExamProgrammingQuestions(@PathVariable int examid) {
+        return new ResponseEntity<>(examService.getExamProgrammingQuestions(examid), HttpStatus.OK);
     }
     @GetMapping
     public ResponseEntity<?> getExams() {

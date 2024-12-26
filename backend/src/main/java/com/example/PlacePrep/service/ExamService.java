@@ -1,14 +1,11 @@
 package com.example.PlacePrep.service;
 
 
-import com.example.PlacePrep.model.Exam;
-import com.example.PlacePrep.model.ExamQuestion;
-import com.example.PlacePrep.model.Question;
-import com.example.PlacePrep.repository.AttemptedExamRepository;
-import com.example.PlacePrep.repository.ExamQuestionRepository;
-import com.example.PlacePrep.repository.ExamRepository;
+import com.example.PlacePrep.model.*;
+import com.example.PlacePrep.repository.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.method.P;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +29,14 @@ public class ExamService {
     @Autowired
     private AttemptedExamRepository attemptedExamRepository;
 
-    public void addExam(Exam exam, Iterable<Question> questions) {
+    @Autowired
+    private ExamProgrammingQuestionRepository examProgrammingQuestionRepository;
+
+    @Autowired
+    private AttemptedQuestionRepository attemptedQuestionRepository;
+
+
+    public void addExam(Exam exam, Iterable<Question> questions, Iterable<ProgrammingQuestion> programmingQuestions) {
         exam.setCollege(exam.getCollege().toUpperCase());
         exam.setCreated_at(LocalDateTime.now());
         exam.setUpdated_at(LocalDateTime.now());
@@ -57,6 +61,38 @@ public class ExamService {
         }
 
         examQuestionRepository.saveAll(examQuestions);
+
+
+
+        List<ProgrammingQuestion> programmingQuestionList = StreamSupport.stream(programmingQuestions.spliterator(), false)
+                .collect(Collectors.toList());
+        List<ProgrammingQuestion> randomProgrammingQuestions = getRandomProgrammingQuestions(
+                programmingQuestionList,
+                exam.getNo_of_programming_questions()
+        );
+
+        List<ExamProgrammingQuestion> examProgrammingQuestions = new ArrayList<>();
+        for (ProgrammingQuestion programmingQuestion : randomProgrammingQuestions) {
+            ExamProgrammingQuestion examProgrammingQuestion = new ExamProgrammingQuestion();
+            examProgrammingQuestion.setExam(exam);
+            examProgrammingQuestion.setProgrammingQuestion(programmingQuestion);
+            examProgrammingQuestion.setCreatedBy(exam.getCreated_by());
+            examProgrammingQuestion.setCreatedAt(LocalDateTime.now());
+            examProgrammingQuestions.add(examProgrammingQuestion);
+        }
+        examProgrammingQuestionRepository.saveAll(examProgrammingQuestions);
+    }
+
+    private List<ProgrammingQuestion> getRandomProgrammingQuestions(
+            List<ProgrammingQuestion> availableQuestions,
+            int numberOfQuestions
+    ) {
+        if (availableQuestions.size() <= numberOfQuestions) {
+            return availableQuestions;
+        }
+        List<ProgrammingQuestion> shuffledQuestions = new ArrayList<>(availableQuestions);
+        Collections.shuffle(shuffledQuestions);
+        return shuffledQuestions.subList(0, numberOfQuestions);
     }
 
     public Iterable<Exam> getExams() {
@@ -109,6 +145,11 @@ public class ExamService {
     public void deleteExam(int examid) {
         attemptedExamRepository.deleteByExamId(examid);
         examQuestionRepository.deleteByExamId(examid);
+        attemptedQuestionRepository.deleteByExamId(examid);
+        examProgrammingQuestionRepository.deleteByExamId(examid);
         examRepository.deleteById(examid);
+    }
+    public Iterable<ExamProgrammingQuestion> getExamProgrammingQuestions(int examid) {
+        return examProgrammingQuestionRepository.findByExamId(examid);
     }
 }

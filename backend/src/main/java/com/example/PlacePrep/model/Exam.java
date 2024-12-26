@@ -24,6 +24,9 @@ public class Exam {
     @Column(name = "no_of_questions")
     private Integer no_of_questions;
 
+    @Column(name = "no_of_programming_questions")
+    private Integer no_of_programming_questions;
+
     @Column(name = "exam_start_date")
     private LocalDate exam_start_date;
 

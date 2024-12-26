@@ -54,8 +54,7 @@ public class AttemptedQuestionService {
 
     public void updateAttemptedQuestionByUserIdAndExamIdAndQuestionId(AttemptedQuestionDTO attemptedQuestiondto)
     {
-        AttemptedQuestion attemptedQuestion1 = attemptedQuestionRepository.findByUserIdAndExamIdAndQuestionId(attemptedQuestiondto.getUserId(), attemptedQuestiondto.getExamId(), attemptedQuestiondto.getQuestionId());
-        System.out.println(attemptedQuestiondto.getSelectedOption());
+        AttemptedQuestion attemptedQuestion1 = attemptedQuestionRepository.findTopByUserIdAndExamIdAndQuestionIdOrderByCreatedAtDesc(attemptedQuestiondto.getUserId(), attemptedQuestiondto.getExamId(), attemptedQuestiondto.getQuestionId());
         attemptedQuestion1.setSelectedOption(attemptedQuestiondto.getSelectedOption());
         attemptedQuestionRepository.save(attemptedQuestion1);
     }

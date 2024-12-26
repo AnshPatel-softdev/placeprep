@@ -11,5 +11,6 @@ public interface AttemptedQuestionRepository extends JpaRepository<AttemptedQues
 
     public void deleteByUserIdAndExamId(int userId, int examId);
 
-    public AttemptedQuestion findByUserIdAndExamIdAndQuestionId(int userId, int examId, int questionId);
+    public void deleteByExamId(int examid);
+    public AttemptedQuestion findTopByUserIdAndExamIdAndQuestionIdOrderByCreatedAtDesc(int userId, int examId, int questionId);
 }
