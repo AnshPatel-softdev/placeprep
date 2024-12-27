@@ -56,6 +56,7 @@ const ShowExamModel = ({ user }) => {
   const [editFormData, setEditFormData] = useState({
     exam_name: '',
     no_of_questions: '',
+    no_of_programming_questions: '',
     exam_start_date: '',
     exam_start_time: '',
     exam_end_date: '',
@@ -138,6 +139,7 @@ const ShowExamModel = ({ user }) => {
     editFormData.total_marks = parseInt(editFormData.total_marks)
     editFormData.duration = parseInt(editFormData.duration)
     editFormData.no_of_questions = parseInt(editFormData.no_of_questions)
+    editFormData.no_of_programming_questions = parseInt(editFormData.no_of_programming_questions);
     try {
       const response = await fetch(`http://localhost:8081/exam/${editFormData.id}`, {
         method: 'PUT',
@@ -374,7 +376,8 @@ const ShowExamModel = ({ user }) => {
                   <p><span className="font-medium">College:</span> {selectedExam.college}</p>
                   <p><span className="font-medium">Branch:</span> {selectedExam.branch}</p>
                   <p><span className="font-medium">Semester:</span> {selectedExam.semester}</p>
-                  <p><span className="font-medium">Total Questions:</span> {selectedExam.no_of_questions}</p>
+                  <p><span className="font-medium">MCQ Questions:</span> {selectedExam.no_of_questions}</p>
+                  <p><span className="font-medium">Programming Questions:</span> {selectedExam.no_of_programming_questions}</p>
                   <p><span className="font-medium">Total Marks:</span> {selectedExam.total_marks}</p>
                   <p><span className="font-medium">Passing Marks:</span> {selectedExam.passing_marks}</p>
                   <p><span className="font-medium">Duration:</span> {selectedExam.duration} mins</p>
@@ -392,123 +395,161 @@ const ShowExamModel = ({ user }) => {
       </Dialog>
 
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Edit Exam</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-6 border-b">
+          <DialogTitle className="text-2xl font-semibold">Edit Exam</DialogTitle>
+        </DialogHeader>
+        
+        <div className="py-6 space-y-8">
+          <div className="space-y-6">
+            <h3 className="text-lg font-medium">Basic Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="exam_name">Exam Name</Label>
+                <Label htmlFor="exam_name" className="text-sm font-medium">Exam Name</Label>
                 <Input
                   id="exam_name"
                   name="exam_name"
                   value={editFormData.exam_name}
                   onChange={handleInputChange}
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="college">College</Label>
+                <Label htmlFor="college" className="text-sm font-medium">College</Label>
                 <Input
                   id="college"
                   name="college"
                   value={editFormData.college}
                   onChange={handleInputChange}
+                  className="w-full"
                 />
               </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <h3 className="text-lg font-medium">Exam Structure</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="no_of_questions">Number of Questions</Label>
+                <Label htmlFor="no_of_questions" className="text-sm font-medium">Number of Questions</Label>
                 <Input
                   id="no_of_questions"
                   name="no_of_questions"
                   type="number"
                   value={editFormData.no_of_questions}
                   onChange={handleInputChange}
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="total_marks">Total Marks</Label>
+                <Label htmlFor="no_of_programming_questions" className="text-sm font-medium">Programming Questions</Label>
+                <Input
+                  id="no_of_programming_questions"
+                  name="no_of_programming_questions"
+                  type="number"
+                  value={editFormData.no_of_programming_questions}
+                  onChange={handleInputChange}
+                  min="0"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="total_marks" className="text-sm font-medium">Total Marks</Label>
                 <Input
                   id="total_marks"
                   name="total_marks"
                   type="number"
                   value={editFormData.total_marks}
                   onChange={handleInputChange}
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="passing_marks" className="text-sm font-medium">Passing Marks</Label>
+                <Input
+                  id="passing_marks"
+                  name="passing_marks"
+                  type="number"
+                  value={editFormData.passing_marks}
+                  onChange={handleInputChange}
+                  className="w-full"
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="passing_marks">Passing Marks</Label>
-              <Input
-                id="passing_marks"
-                name="passing_marks"
-                type="number"
-                value={editFormData.passing_marks}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+          </div>
+
+          <div className="space-y-6">
+            <h3 className="text-lg font-medium">Schedule</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="exam_start_date">Start Date</Label>
+                <Label htmlFor="exam_start_date" className="text-sm font-medium">Start Date</Label>
                 <Input
                   id="exam_start_date"
                   name="exam_start_date"
                   type="date"
                   value={editFormData.exam_start_date}
                   onChange={handleInputChange}
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="exam_start_time">Start Time</Label>
+                <Label htmlFor="exam_start_time" className="text-sm font-medium">Start Time</Label>
                 <Input
                   id="exam_start_time"
                   name="exam_start_time"
                   type="time"
                   value={editFormData.exam_start_time}
                   onChange={handleInputChange}
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="exam_end_date">End Date</Label>
+                <Label htmlFor="exam_end_date" className="text-sm font-medium">End Date</Label>
                 <Input
                   id="exam_end_date"
                   name="exam_end_date"
                   type="date"
                   value={editFormData.exam_end_date}
                   onChange={handleInputChange}
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="exam_end_time">End Time</Label>
+                <Label htmlFor="exam_end_time" className="text-sm font-medium">End Time</Label>
                 <Input
                   id="exam_end_time"
                   name="exam_end_time"
                   type="time"
                   value={editFormData.exam_end_time}
                   onChange={handleInputChange}
+                  className="w-full"
                 />
               </div>
             </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-6">
+            <h3 className="text-lg font-medium">Additional Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="duration">Duration (minutes)</Label>
+                <Label htmlFor="duration" className="text-sm font-medium">Duration (minutes)</Label>
                 <Input
                   id="duration"
                   name="duration"
                   type="number"
-                  value={editFormData.duration} 
+                  value={editFormData.duration}
                   onChange={handleInputChange}
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="branch">Branch</Label>
-                <Select 
+                <Label htmlFor="branch" className="text-sm font-medium">Branch</Label>
+                <Select
                   name="branch"
                   value={editFormData.branch}
                   onValueChange={(value) => handleSelectChange('branch', value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select Branch" />
                   </SelectTrigger>
                   <SelectContent>
@@ -521,13 +562,13 @@ const ShowExamModel = ({ user }) => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="semester">Semester</Label>
-                <Select 
+                <Label htmlFor="semester" className="text-sm font-medium">Semester</Label>
+                <Select
                   name="semester"
                   value={editFormData.semester}
                   onValueChange={(value) => handleSelectChange('semester', value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select Semester" />
                   </SelectTrigger>
                   <SelectContent>
@@ -540,26 +581,29 @@ const ShowExamModel = ({ user }) => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="created_by">Created By</Label>
+                <Label htmlFor="created_by" className="text-sm font-medium">Created By</Label>
                 <Input
                   id="created_by"
                   name="created_by"
                   value={editFormData.created_by}
                   onChange={handleInputChange}
+                  className="w-full"
                 />
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdate}>
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+
+        <DialogFooter className="pt-6 border-t">
+          <Button variant="outline" onClick={() => setShowEditDialog(false)} className="mr-2">
+            Cancel
+          </Button>
+          <Button onClick={handleUpdate} className="bg-primary">
+            Save Changes
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
         
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent className="bg-white text-black p-0 overflow-hidden">

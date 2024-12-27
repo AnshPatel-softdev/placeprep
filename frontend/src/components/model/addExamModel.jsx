@@ -14,6 +14,7 @@ const AddExamModel = ({ setShowExamForm, user }) => {
   const [examData, setExamData] = useState({
     exam_name: '',
     no_of_questions: '',
+    no_of_programming_questions: '',
     exam_start_date: '',
     exam_start_time: '',
     exam_end_date: '',
@@ -41,6 +42,7 @@ const AddExamModel = ({ setShowExamForm, user }) => {
     const formattedData = {
       exam_name: examData.exam_name.trim(),
       no_of_questions: parseInt(examData.no_of_questions),
+      no_of_programming_questions: parseInt(examData.no_of_programming_questions),
       exam_start_date: examData.exam_start_date,
       exam_start_time: examData.exam_start_time + ':00',
       exam_end_date: examData.exam_end_date,
@@ -77,6 +79,7 @@ const AddExamModel = ({ setShowExamForm, user }) => {
       setExamData({
         exam_name: '',
         no_of_questions: '',
+        no_of_programming_questions: '',
         exam_start_date: '',
         exam_start_time: '',
         exam_end_date: '',
@@ -112,16 +115,29 @@ const AddExamModel = ({ setShowExamForm, user }) => {
             />
           </div>
           
-          <div>
-            <label className="block text-sm mb-1">Number of Questions *</label>
-            <Input
-              type="number"
-              placeholder="Number of Questions"
-              value={examData.no_of_questions}
-              onChange={(e) => setExamData({ ...examData, no_of_questions: e.target.value })}
-              required
-              min="1"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm mb-1">Number of Questions *</label>
+              <Input
+                type="number"
+                placeholder="Number of Questions"
+                value={examData.no_of_questions}
+                onChange={(e) => setExamData({ ...examData, no_of_questions: e.target.value })}
+                required
+                min="1"
+              />
+            </div>
+            <div>
+              <label className="block text-sm mb-1">Number of Programming Questions *</label>
+              <Input
+                type="number"
+                placeholder="Number of Programming Questions"
+                value={examData.no_of_programming_questions}
+                onChange={(e) => setExamData({ ...examData, no_of_programming_questions: e.target.value })}
+                required
+                min="0"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

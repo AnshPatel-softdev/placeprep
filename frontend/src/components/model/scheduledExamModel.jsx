@@ -89,9 +89,35 @@ const ScheduledExams = ({user, onStartExam}) => {
     }
   };
 
+  const fetchProgrammingQuestions = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:8081/exam/programming/${parseInt(id)}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${user.token}`,
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch programming questions');
+      }
+      return await response.json();
+      
+    } catch (err) {
+      console.error('Error fetching programming questions:', err);
+      throw new Error('Failed to fetch programming questions');
+    }
+  };
+
   const handleAttemptExam = async (exam) => {    
     try {
-      const data = await fetchQuestions(exam.id);
+      const [regularQuestions, programmingQuestions] = await Promise.all([
+        fetchQuestions(exam.id),
+        fetchProgrammingQuestions(exam.id)
+      ]);
+      
+      const data = {regularQuestions,programmingQuestions}
+      console.log(data)
       onStartExam(exam, data);
       navigate('/exam');
     } catch (err) {

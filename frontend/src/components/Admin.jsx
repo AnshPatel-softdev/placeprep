@@ -10,6 +10,9 @@ import ShowExamModel from './model/showExamModel';
 import ShowAttemptedExamsModel from './model/showAttemptedExamModel';
 import ExamManagement from './model/examManagementModel';
 import ShowAttemptedQuestionsModel from './model/showAttemptedQuestionModel';
+import AddProgrammingQuestionModel from './model/addProgrammingQuestionModel';
+import ShowProgrammingQuestionModel from './model/showProgrammingQuestionModel';
+import ShowAttemptedProgrammingQuestionModel from './model/showAttemptedProgrammingQuestionModel';
 
 const AdminDashboard = ({ user }) => {
     const [activePanel, setActivePanel] = useState(null);
@@ -46,6 +49,13 @@ const AdminDashboard = ({ user }) => {
                         variant={activePanel === 'addQuestion' ? 'secondary' : 'default'}
                     >
                         {activePanel === 'addQuestion' ? 'Cancel' : 'Add New Question'}
+                    </Button>
+
+                    <Button 
+                        onClick={() => togglePanel('addProgrammingQuestion')}
+                        variant={activePanel === 'addProgrammingQuestion' ? 'secondary' : 'default'}
+                    >
+                        {activePanel === 'addProgrammingQuestion' ? 'Cancel' : 'Add Programming Question'}
                     </Button>
 
                     <Button 
@@ -95,6 +105,13 @@ const AdminDashboard = ({ user }) => {
                     </Button>
 
                     <Button 
+                        onClick={() => togglePanel('showProgrammingQuestions')}
+                        variant={activePanel === 'showProgrammingQuestions' ? 'secondary' : 'default'}
+                    >
+                        {activePanel === 'showProgrammingQuestions' ? 'Cancel' : 'Show Programming Questions'}
+                    </Button>
+
+                    <Button 
                         onClick={() => togglePanel('showAttemptedExams')}
                         variant={activePanel === 'showAttemptedExams' ? 'secondary' : 'default'}
                     >
@@ -106,6 +123,13 @@ const AdminDashboard = ({ user }) => {
                         variant={activePanel === 'showAttemptedQuestion' ? 'secondary' : 'default'}
                     >
                         {activePanel === 'showAttemptedQuestion' ? 'Cancel' : 'Show Attempted Questions'}
+                    </Button>
+
+                    <Button 
+                        onClick={() => togglePanel('showAttemptedProgrammingQuestion')}
+                        variant={activePanel === 'showAttemptedProgrammingQuestion' ? 'secondary' : 'default'}
+                    >
+                        {activePanel === 'showAttemptedProgrammingQuestion' ? 'Cancel' : 'Show Attempted Programming Questions'}
                     </Button>
                 </div>
             </div>
@@ -128,6 +152,13 @@ const AdminDashboard = ({ user }) => {
                 
                 {activePanel === 'addQuestion' && (
                     <AddQuestionModel 
+                        setShowQuestionForm={() => setActivePanel(null)} 
+                        user={user}
+                    />
+                )}
+
+                {activePanel === 'addProgrammingQuestion' && (
+                    <AddProgrammingQuestionModel 
                         setShowQuestionForm={() => setActivePanel(null)} 
                         user={user}
                     />
@@ -156,6 +187,10 @@ const AdminDashboard = ({ user }) => {
                     <ShowQuestionModel user={user} />
                 )}
 
+                {activePanel === 'showProgrammingQuestions' && (
+                    <ShowProgrammingQuestionModel user={user} />
+                )}
+
                 {activePanel === 'showExams' && (
                     <ShowExamModel user={user} />
                 )}
@@ -165,11 +200,15 @@ const AdminDashboard = ({ user }) => {
                 )}
 
                 {activePanel === 'examManagement' && (
-                    <ExamManagement user = {user}/>
+                    <ExamManagement user={user} />
                 )}
 
                 {activePanel === 'showAttemptedQuestion' && (
                     <ShowAttemptedQuestionsModel user={user} />
+                )}
+
+                {activePanel === 'showAttemptedProgrammingQuestion' && (
+                    <ShowAttemptedProgrammingQuestionModel user={user} />
                 )}
             </div>
         </div>

@@ -3,9 +3,11 @@ import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import Editor from '@monaco-editor/react';
 
 const ExamPagination = ({ exam, questions, user }) => {
-  questions = questions.map(item => item.question);
+  const regularQuestions = questions.regularQuestions.map(q => q.question);
+  const programmingQuestions = questions.programmingQuestions;
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
   const [answers, setAnswers] = useState({});
@@ -13,7 +15,8 @@ const ExamPagination = ({ exam, questions, user }) => {
   const [isExamCompleted, setIsExamCompleted] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [showProgrammingSection, setShowProgrammingSection] = useState(false);
+  const [programCode, setProgramCode] = useState('');
   useEffect(() => {
     const preventCopyPaste = (e) => {
       e.preventDefault();
@@ -64,10 +67,6 @@ const ExamPagination = ({ exam, questions, user }) => {
 
   const saveQuestionAttempt = async (questionId, selectedOption) => {
     try {
-      console.log(user)
-  console.log(questions)
-  console.log(exam)
-  console.log(selectedOption)
       const attemptData = {
         userId: parseInt(user.id),
         examId: parseInt(exam.id),
@@ -84,6 +83,31 @@ const ExamPagination = ({ exam, questions, user }) => {
       console.error('Failed to save question attempt:', error);
       setAlertMessage({
         message: "Failed to save question attempt.",
+        type: 'error'
+      });
+    }
+  };
+
+  const saveProgrammingAttempt = async () => {
+    try {
+      const programmingAttemptData = {
+        userId: parseInt(user.id),
+        examId: parseInt(exam.id),
+        programmingQuestionId: programmingQuestions[0].id,
+        answer: programCode
+      };
+      console.log(programmingQuestions[0].id)
+      console.log(programCode)
+
+      await axios.post('http://localhost:8081/attempted_programming_question', programmingAttemptData, {
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
+    } catch (error) {
+      console.error('Failed to save programming attempt:', error);
+      setAlertMessage({
+        message: "Failed to save programming attempt.",
         type: 'error'
       });
     }
@@ -119,7 +143,7 @@ const ExamPagination = ({ exam, questions, user }) => {
   };
 
   const handleOptionSelect = async (option) => {
-    const currentQuestion = questions[currentQuestionIndex];
+    const currentQuestion = regularQuestions[currentQuestionIndex];
     
     if (!answers[currentQuestionIndex]) {
       await saveQuestionAttempt(currentQuestion.id, option);
@@ -135,14 +159,19 @@ const ExamPagination = ({ exam, questions, user }) => {
   };
 
   const handleNextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
+    if (currentQuestionIndex < regularQuestions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
       setSelectedOption(answers[currentQuestionIndex + 1] || null);
+    } else if (currentQuestionIndex === regularQuestions.length - 1 && programmingQuestions.length > 0) {
+      setShowProgrammingSection(true);
     }
   };
 
   const handlePreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
+    if (showProgrammingSection) {
+      setShowProgrammingSection(false);
+      setCurrentQuestionIndex(regularQuestions.length - 1);
+    } else if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(prev => prev - 1);
       setSelectedOption(answers[currentQuestionIndex - 1] || null);
     }
@@ -154,8 +183,12 @@ const ExamPagination = ({ exam, questions, user }) => {
     try {
       setIsSubmitting(true);
 
+      if (programmingQuestions.length > 0) {
+        await saveProgrammingAttempt();
+      }
+
       let correctCount = 0;
-      questions.forEach((question, index) => {
+      regularQuestions.forEach((question, index) => {
         if (answers[index] === question.answer) {
           correctCount++;
         }
@@ -181,7 +214,7 @@ const ExamPagination = ({ exam, questions, user }) => {
           second: "2-digit",
         }),
         obtainedMarks: correctCount,
-        totalMarks: questions.length,
+        totalMarks: regularQuestions.length,
         passingMarks: exam.passing_marks,
         passingStatus: status,
       };
@@ -193,26 +226,27 @@ const ExamPagination = ({ exam, questions, user }) => {
       });
 
       setIsExamCompleted(true);
-
       setAlertMessage({
-        message: `You ${status}ed the exam. Marks: ${correctCount}/${questions.length}`, 
+        message: `You ${status}ed the exam. Marks: ${correctCount}/${regularQuestions.length}`,
         type: status === 'Pass' ? 'success' : 'error'
       });
 
     } catch (error) {
       setAlertMessage({
-        message: "Failed to submit exam. Please try again.", 
+        message: "Failed to submit exam. Please try again.",
         type: 'error'
       });
     } finally {
       setIsSubmitting(false);
     }
   }, [
-    isSubmitting, 
-    isExamCompleted, 
-    answers, 
-    questions, 
-    exam, 
+    isSubmitting,
+    isExamCompleted,
+    answers,
+    regularQuestions,
+    programmingQuestions,
+    programCode,
+    exam,
     user
   ]);
 
@@ -229,22 +263,91 @@ const ExamPagination = ({ exam, questions, user }) => {
     );
   }
 
-  const currentQuestion = questions[currentQuestionIndex];
+  if (showProgrammingSection && programmingQuestions.length > 0) {
+    
+    return (
+      <div className="max-w-6xl mx-auto p-4">
+        <div className="text-right mb-4 font-bold text-red-600">
+          Time Remaining: {formatTime(timeRemaining)}
+        </div>
+
+        {alertMessage && (
+          <Alert 
+            variant={alertMessage.type === 'error' ? 'destructive' : 'default'} 
+            className="mb-4"
+          >
+            <AlertDescription>{alertMessage.message}</AlertDescription>
+          </Alert>
+        )}
+
+        <div className="grid grid-cols-2 gap-4">
+          <Card className="h-full overflow-auto">
+            <CardHeader>
+              <CardTitle>Programming Question</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="prose max-w-none">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-2">Problem Description</h3>
+                  <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-md overflow-auto">
+                    {programmingQuestions[0].programmingQuestion.questionContent || 'Loading question...'}
+                  </pre>
+                </div>
+                
+                <div className="mb-4">
+                  <h4 className="font-medium mb-2">Difficulty: {programmingQuestions[0].programmingQuestion.difficulty}</h4>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle>Code Editor</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Editor
+                height="60vh"
+                defaultLanguage="cpp"
+                value={programCode}
+                onChange={setProgramCode}
+                theme="vs-dark"
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  lineNumbers: 'on',
+                  automaticLayout: true,
+                }}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="flex justify-between mt-6">
+          <Button variant="secondary" onClick={handlePreviousQuestion}>
+            Back to MCQs
+          </Button>
+          <Button
+            onClick={handleSubmitExam}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit Exam'}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const currentQuestion = regularQuestions[currentQuestionIndex];
 
   return (
     <div className="max-w-2xl mx-auto p-4">
       {alertMessage && (
         <Alert 
-          variant={
-            alertMessage.type === 'error' ? 'destructive' : 
-            alertMessage.type === 'success' ? 'default' : 
-            'outline'
-          } 
+          variant={alertMessage.type === 'error' ? 'destructive' : 'default'} 
           className="mb-4"
         >
-          <AlertDescription>
-            {alertMessage.message}
-          </AlertDescription>
+          <AlertDescription>{alertMessage.message}</AlertDescription>
         </Alert>
       )}
 
@@ -255,7 +358,7 @@ const ExamPagination = ({ exam, questions, user }) => {
       <Card>
         <CardHeader>
           <CardTitle>
-            Question {currentQuestionIndex + 1} of {questions.length}
+            Question {currentQuestionIndex + 1} of {regularQuestions.length}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -281,23 +384,15 @@ const ExamPagination = ({ exam, questions, user }) => {
               </Button>
             )}
             
-            {currentQuestionIndex < questions.length - 1 ? (
-              <Button 
-                onClick={handleNextQuestion} 
-                disabled={!selectedOption}
-                className="ml-auto"
-              >
-                Next
-              </Button>
-            ) : (
-              <Button 
-                onClick={handleSubmitExam} 
-                disabled={!selectedOption || isSubmitting}
-                className="ml-auto"
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit Exam'}
-              </Button>
-            )}
+            <Button 
+              onClick={handleNextQuestion} 
+              disabled={!selectedOption}
+              className="ml-auto"
+            >
+              {currentQuestionIndex === regularQuestions.length - 1 && programmingQuestions.length > 0 
+                ? 'Go to Programming Question' 
+                : 'Next'}
+            </Button>
           </div>
         </CardContent>
       </Card>
