@@ -35,51 +35,179 @@ public class ExamService {
     @Autowired
     private AttemptedQuestionRepository attemptedQuestionRepository;
 
+    @Autowired
+    private AttemptedProgrammingQuestionRepository attemptedProgrammingQuestionRepository;
 
+    private List<Question> filterQuestionsByDifficultyAndType(List<Question> questions, String difficulty, String type) {
+        return questions.stream()
+                .filter(q -> q.getDifficulty().equals(difficulty) && q.getType().equals(type))
+                .collect(Collectors.toList());
+    }
+
+    private List<Question> selectQuestionsWithDifficultyDistribution(List<Question> typeFilteredQuestions,
+                                                                     String examDifficulty, int requiredCount) {
+        List<Question> selectedQuestions = new ArrayList<>();
+        List<Question> easyQuestions = typeFilteredQuestions.stream()
+                .filter(q -> q.getDifficulty().equals("Easy"))
+                .collect(Collectors.toList());
+        List<Question> mediumQuestions = typeFilteredQuestions.stream()
+                .filter(q -> q.getDifficulty().equals("Medium"))
+                .collect(Collectors.toList());
+        List<Question> hardQuestions = typeFilteredQuestions.stream()
+                .filter(q -> q.getDifficulty().equals("Hard"))
+                .collect(Collectors.toList());
+
+        switch (examDifficulty) {
+            case "EASY":
+                int easyCount = (int) Math.ceil(requiredCount * 0.6);
+                int mediumCount = requiredCount - easyCount;
+                selectedQuestions.addAll(getRandomQuestions(easyQuestions, easyCount));
+                selectedQuestions.addAll(getRandomQuestions(mediumQuestions, mediumCount));
+                break;
+
+            case "MEDIUM":
+                easyCount = (int) Math.ceil(requiredCount * 0.2);
+                mediumCount = (int) Math.ceil(requiredCount * 0.5);
+                int hardCount = requiredCount - easyCount - mediumCount;
+                selectedQuestions.addAll(getRandomQuestions(easyQuestions, easyCount));
+                selectedQuestions.addAll(getRandomQuestions(mediumQuestions, mediumCount));
+                selectedQuestions.addAll(getRandomQuestions(hardQuestions, hardCount));
+                break;
+
+            case "HARD":
+                mediumCount = (int) Math.ceil(requiredCount * 0.4);
+                hardCount = requiredCount - mediumCount;
+                selectedQuestions.addAll(getRandomQuestions(mediumQuestions, mediumCount));
+                selectedQuestions.addAll(getRandomQuestions(hardQuestions, hardCount));
+                break;
+        }
+
+        Collections.shuffle(selectedQuestions);
+        return selectedQuestions;
+    }
+    private List<ProgrammingQuestion> selectProgrammingQuestionsWithDifficultyDistribution(
+            List<ProgrammingQuestion> programmingQuestions,
+            String examDifficulty,
+            int requiredCount) {
+
+        List<ProgrammingQuestion> selectedQuestions = new ArrayList<>();
+
+        List<ProgrammingQuestion> easyQuestions = programmingQuestions.stream()
+                .filter(q -> q.getDifficulty().equals("Easy"))
+                .collect(Collectors.toList());
+
+        List<ProgrammingQuestion> mediumQuestions = programmingQuestions.stream()
+                .filter(q -> q.getDifficulty().equals("Medium"))
+                .collect(Collectors.toList());
+
+        List<ProgrammingQuestion> hardQuestions = programmingQuestions.stream()
+                .filter(q -> q.getDifficulty().equals("Hard"))
+                .collect(Collectors.toList());
+
+        switch (examDifficulty) {
+            case "EASY":
+                int easyCount = (int) Math.ceil(requiredCount * 0.6);
+                int mediumCount = requiredCount - easyCount;
+                selectedQuestions.addAll(getRandomProgrammingQuestions(easyQuestions, easyCount));
+                selectedQuestions.addAll(getRandomProgrammingQuestions(mediumQuestions, mediumCount));
+                break;
+
+            case "MEDIUM":
+                easyCount = (int) Math.ceil(requiredCount * 0.2);
+                mediumCount = (int) Math.ceil(requiredCount * 0.5);
+                int hardCount = requiredCount - easyCount - mediumCount;
+                selectedQuestions.addAll(getRandomProgrammingQuestions(easyQuestions, easyCount));
+                selectedQuestions.addAll(getRandomProgrammingQuestions(mediumQuestions, mediumCount));
+                selectedQuestions.addAll(getRandomProgrammingQuestions(hardQuestions, hardCount));
+                break;
+
+            case "HARD":
+                mediumCount = (int) Math.ceil(requiredCount * 0.4);
+                hardCount = requiredCount - mediumCount;
+                selectedQuestions.addAll(getRandomProgrammingQuestions(mediumQuestions, mediumCount));
+                selectedQuestions.addAll(getRandomProgrammingQuestions(hardQuestions, hardCount));
+                break;
+        }
+
+        Collections.shuffle(selectedQuestions);
+        return selectedQuestions;
+    }
     public void addExam(Exam exam, Iterable<Question> questions, Iterable<ProgrammingQuestion> programmingQuestions) {
         exam.setCollege(exam.getCollege().toUpperCase());
         exam.setCreated_at(LocalDateTime.now());
         exam.setUpdated_at(LocalDateTime.now());
         examRepository.save(exam);
 
-        List<Question> questionList = StreamSupport.stream(questions.spliterator(), false)
+        List<Question> allQuestions = StreamSupport.stream(questions.spliterator(), false)
                 .collect(Collectors.toList());
 
-        int numberOfQuestions = exam.getNo_of_questions();
+        List<Question> logicalQuestions = allQuestions.stream()
+                .filter(q -> q.getType().equals("Logical"))
+                .collect(Collectors.toList());
 
-        List<Question> randomQuestions = getRandomQuestions(questionList, numberOfQuestions);
+        List<Question> technicalQuestions = allQuestions.stream()
+                .filter(q -> q.getType().equals("Technical"))
+                .collect(Collectors.toList());
 
-        List<ExamQuestion> examQuestions = new ArrayList<>();
-        for (Question question : randomQuestions) {
+        List<Question> programmingMcqQuestions = allQuestions.stream()
+                .filter(q -> q.getType().equals("Programming"))
+                .collect(Collectors.toList());
+
+        List<Question> selectedLogicalQuestions = selectQuestionsWithDifficultyDistribution(
+                logicalQuestions,
+                exam.getDifficulty(),
+                exam.getNo_of_Logical_questions()
+        );
+
+        List<Question> selectedTechnicalQuestions = selectQuestionsWithDifficultyDistribution(
+                technicalQuestions,
+                exam.getDifficulty(),
+                exam.getNo_of_Technical_questions()
+        );
+
+        List<Question> selectedProgrammingMcqQuestions = selectQuestionsWithDifficultyDistribution(
+                programmingMcqQuestions,
+                exam.getDifficulty(),
+                exam.getNo_of_Programming_mcq_questions()
+        );
+
+        List<Question> allSelectedQuestions = new ArrayList<>();
+        allSelectedQuestions.addAll(selectedLogicalQuestions);
+        allSelectedQuestions.addAll(selectedTechnicalQuestions);
+        allSelectedQuestions.addAll(selectedProgrammingMcqQuestions);
+
+        List<ExamQuestion> examQuestions = allSelectedQuestions.stream().map(question -> {
             ExamQuestion examQuestion = new ExamQuestion();
             examQuestion.setExam(exam);
             examQuestion.setQuestion(question);
             examQuestion.setCreatedBy(exam.getCreated_by());
             examQuestion.setCreatedAt(LocalDateTime.now());
-
-            examQuestions.add(examQuestion);
-        }
+            return examQuestion;
+        }).collect(Collectors.toList());
 
         examQuestionRepository.saveAll(examQuestions);
 
+        List<ProgrammingQuestion> programmingQuestionList = StreamSupport.stream(
+                programmingQuestions.spliterator(),
+                false
+        ).collect(Collectors.toList());
 
-
-        List<ProgrammingQuestion> programmingQuestionList = StreamSupport.stream(programmingQuestions.spliterator(), false)
-                .collect(Collectors.toList());
-        List<ProgrammingQuestion> randomProgrammingQuestions = getRandomProgrammingQuestions(
+        List<ProgrammingQuestion> selectedProgrammingQuestions = selectProgrammingQuestionsWithDifficultyDistribution(
                 programmingQuestionList,
+                exam.getDifficulty(),
                 exam.getNo_of_programming_questions()
         );
 
-        List<ExamProgrammingQuestion> examProgrammingQuestions = new ArrayList<>();
-        for (ProgrammingQuestion programmingQuestion : randomProgrammingQuestions) {
-            ExamProgrammingQuestion examProgrammingQuestion = new ExamProgrammingQuestion();
-            examProgrammingQuestion.setExam(exam);
-            examProgrammingQuestion.setProgrammingQuestion(programmingQuestion);
-            examProgrammingQuestion.setCreatedBy(exam.getCreated_by());
-            examProgrammingQuestion.setCreatedAt(LocalDateTime.now());
-            examProgrammingQuestions.add(examProgrammingQuestion);
-        }
+        List<ExamProgrammingQuestion> examProgrammingQuestions = selectedProgrammingQuestions.stream()
+                .map(programmingQuestion -> {
+                    ExamProgrammingQuestion examProgrammingQuestion = new ExamProgrammingQuestion();
+                    examProgrammingQuestion.setExam(exam);
+                    examProgrammingQuestion.setProgrammingQuestion(programmingQuestion);
+                    examProgrammingQuestion.setCreatedBy(exam.getCreated_by());
+                    examProgrammingQuestion.setCreatedAt(LocalDateTime.now());
+                    return examProgrammingQuestion;
+                }).collect(Collectors.toList());
+
         examProgrammingQuestionRepository.saveAll(examProgrammingQuestions);
     }
 
@@ -147,6 +275,7 @@ public class ExamService {
         examQuestionRepository.deleteByExamId(examid);
         attemptedQuestionRepository.deleteByExamId(examid);
         examProgrammingQuestionRepository.deleteByExamId(examid);
+        attemptedProgrammingQuestionRepository.deleteByExamId(examid);
         examRepository.deleteById(examid);
     }
     public Iterable<ExamProgrammingQuestion> getExamProgrammingQuestions(int examid) {

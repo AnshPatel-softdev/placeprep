@@ -16,7 +16,8 @@ const ExamPagination = ({ exam, questions, user }) => {
   const [alertMessage, setAlertMessage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showProgrammingSection, setShowProgrammingSection] = useState(false);
-  const [programCode, setProgramCode] = useState('');
+  const [currentProgrammingIndex, setCurrentProgrammingIndex] = useState(0);
+  const [programmingAnswers, setProgrammingAnswers] = useState({});
   useEffect(() => {
     const preventCopyPaste = (e) => {
       e.preventDefault();
@@ -90,20 +91,21 @@ const ExamPagination = ({ exam, questions, user }) => {
 
   const saveProgrammingAttempt = async () => {
     try {
-      const programmingAttemptData = {
-        userId: parseInt(user.id),
-        examId: parseInt(exam.id),
-        programmingQuestionId: programmingQuestions[0].id,
-        answer: programCode
-      };
-      console.log(programmingQuestions[0].id)
-      console.log(programCode)
+      // Save all programming answers
+      for (const [index, code] of Object.entries(programmingAnswers)) {
+        const programmingAttemptData = {
+          userId: parseInt(user.id),
+          examId: parseInt(exam.id),
+          programmingQuestionId: programmingQuestions[parseInt(index)].id,
+          answer: code
+        };
 
-      await axios.post('http://localhost:8081/attempted_programming_question', programmingAttemptData, {
-        headers: {
-          'Authorization': `Bearer ${user.token}`
-        }
-      });
+        await axios.post('http://localhost:8081/attempted_programming_question', programmingAttemptData, {
+          headers: {
+            'Authorization': `Bearer ${user.token}`
+          }
+        });
+      }
     } catch (error) {
       console.error('Failed to save programming attempt:', error);
       setAlertMessage({
@@ -176,7 +178,27 @@ const ExamPagination = ({ exam, questions, user }) => {
       setSelectedOption(answers[currentQuestionIndex - 1] || null);
     }
   };
+  const handleCodeChange = (value) => {
+    setProgrammingAnswers(prev => ({
+      ...prev,
+      [currentProgrammingIndex]: value
+    }));
+  };
 
+  const handleNextProgrammingQuestion = () => {
+    if (currentProgrammingIndex < programmingQuestions.length - 1) {
+      setCurrentProgrammingIndex(prev => prev + 1);
+    }
+  };
+
+  const handlePreviousProgrammingQuestion = () => {
+    if (currentProgrammingIndex > 0) {
+      setCurrentProgrammingIndex(prev => prev - 1);
+    } else {
+      setShowProgrammingSection(false);
+      setCurrentQuestionIndex(regularQuestions.length - 1);
+    }
+  };
   const handleSubmitExam = useCallback(async () => {
     if (isSubmitting || isExamCompleted) return;
 
@@ -245,7 +267,7 @@ const ExamPagination = ({ exam, questions, user }) => {
     answers,
     regularQuestions,
     programmingQuestions,
-    programCode,
+    programmingAnswers,
     exam,
     user
   ]);
@@ -264,6 +286,7 @@ const ExamPagination = ({ exam, questions, user }) => {
   }
 
   if (showProgrammingSection && programmingQuestions.length > 0) {
+    const currentProgrammingQuestion = programmingQuestions[currentProgrammingIndex];
     
     return (
       <div className="max-w-6xl mx-auto p-4">
@@ -280,6 +303,12 @@ const ExamPagination = ({ exam, questions, user }) => {
           </Alert>
         )}
 
+        <div className="mb-4">
+          <h2 className="text-xl font-bold">
+            Programming Question {currentProgrammingIndex + 1} of {programmingQuestions.length}
+          </h2>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <Card className="h-full overflow-auto">
             <CardHeader>
@@ -290,12 +319,14 @@ const ExamPagination = ({ exam, questions, user }) => {
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold mb-2">Problem Description</h3>
                   <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-md overflow-auto">
-                    {programmingQuestions[0].programmingQuestion.questionContent || 'Loading question...'}
+                    {currentProgrammingQuestion.programmingQuestion.questionContent || 'Loading question...'}
                   </pre>
                 </div>
                 
                 <div className="mb-4">
-                  <h4 className="font-medium mb-2">Difficulty: {programmingQuestions[0].programmingQuestion.difficulty}</h4>
+                  <h4 className="font-medium mb-2">
+                    Difficulty: {currentProgrammingQuestion.programmingQuestion.difficulty}
+                  </h4>
                 </div>
               </div>
             </CardContent>
@@ -309,8 +340,8 @@ const ExamPagination = ({ exam, questions, user }) => {
               <Editor
                 height="60vh"
                 defaultLanguage="cpp"
-                value={programCode}
-                onChange={setProgramCode}
+                value={programmingAnswers[currentProgrammingIndex] || ''}
+                onChange={handleCodeChange}
                 theme="vs-dark"
                 options={{
                   minimap: { enabled: false },
@@ -324,15 +355,22 @@ const ExamPagination = ({ exam, questions, user }) => {
         </div>
 
         <div className="flex justify-between mt-6">
-          <Button variant="secondary" onClick={handlePreviousQuestion}>
-            Back to MCQs
+          <Button variant="secondary" onClick={handlePreviousProgrammingQuestion}>
+            {currentProgrammingIndex === 0 ? 'Back to MCQs' : 'Previous'}
           </Button>
-          <Button
-            onClick={handleSubmitExam}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Submitting...' : 'Submit Exam'}
-          </Button>
+          
+          {currentProgrammingIndex < programmingQuestions.length - 1 ? (
+            <Button onClick={handleNextProgrammingQuestion}>
+              Next
+            </Button>
+          ) : (
+            <Button
+              onClick={handleSubmitExam}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Exam'}
+            </Button>
+          )}
         </div>
       </div>
     );

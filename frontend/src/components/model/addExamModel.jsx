@@ -14,6 +14,10 @@ const AddExamModel = ({ setShowExamForm, user }) => {
   const [examData, setExamData] = useState({
     exam_name: '',
     no_of_questions: '',
+    difficulty: '',
+    no_of_Logical_questions: '',
+    no_of_Technical_questions: '',
+    no_of_Programming_mcq_questions: '',
     no_of_programming_questions: '',
     exam_start_date: '',
     exam_start_time: '',
@@ -28,13 +32,33 @@ const AddExamModel = ({ setShowExamForm, user }) => {
     created_by: user?.id || 0,
   });
 
+  const [questionDistributionError, setQuestionDistributionError] = useState('');
+
+  const validateQuestionDistribution = () => {
+    const logical = parseInt(examData.no_of_Logical_questions) || 0;
+    const technical = parseInt(examData.no_of_Technical_questions) || 0;
+    const programmingMcq = parseInt(examData.no_of_Programming_mcq_questions) || 0;
+    const total = parseInt(examData.no_of_questions) || 0;
+
+    if (logical + technical + programmingMcq !== total) {
+      setQuestionDistributionError('The sum of Logical, Technical, and Programming MCQ questions must equal the total number of questions');
+      return false;
+    }
+    setQuestionDistributionError('');
+    return true;
+  };
+
   const handleExamSubmit = async (e) => {
     e.preventDefault();
     
-    if (!examData.exam_name || !examData.no_of_questions || !examData.exam_start_date || 
-        !examData.exam_start_time || !examData.exam_end_date || !examData.exam_end_time || 
-        !examData.college || !examData.branch || !examData.semester || 
-        !examData.total_marks || !examData.duration) {
+    if (!validateQuestionDistribution()) {
+      return;
+    }
+
+    if (!examData.exam_name || !examData.no_of_questions || !examData.difficulty || 
+        !examData.exam_start_date || !examData.exam_start_time || !examData.exam_end_date || 
+        !examData.exam_end_time || !examData.college || !examData.branch || 
+        !examData.semester || !examData.total_marks || !examData.duration) {
       alert('Please fill in all required fields');
       return;
     }
@@ -42,6 +66,10 @@ const AddExamModel = ({ setShowExamForm, user }) => {
     const formattedData = {
       exam_name: examData.exam_name.trim(),
       no_of_questions: parseInt(examData.no_of_questions),
+      difficulty: examData.difficulty,
+      no_of_Logical_questions: parseInt(examData.no_of_Logical_questions),
+      no_of_Technical_questions: parseInt(examData.no_of_Technical_questions),
+      no_of_Programming_mcq_questions: parseInt(examData.no_of_Programming_mcq_questions),
       no_of_programming_questions: parseInt(examData.no_of_programming_questions),
       exam_start_date: examData.exam_start_date,
       exam_start_time: examData.exam_start_time + ':00',
@@ -79,6 +107,10 @@ const AddExamModel = ({ setShowExamForm, user }) => {
       setExamData({
         exam_name: '',
         no_of_questions: '',
+        difficulty: '',
+        no_of_Logical_questions: '',
+        no_of_Technical_questions: '',
+        no_of_Programming_mcq_questions: '',
         no_of_programming_questions: '',
         exam_start_date: '',
         exam_start_time: '',
@@ -115,12 +147,30 @@ const AddExamModel = ({ setShowExamForm, user }) => {
             />
           </div>
           
+          <div>
+            <label className="block text-sm mb-1">Difficulty Level *</label>
+            <Select
+              value={examData.difficulty}
+              onValueChange={(value) => setExamData({ ...examData, difficulty: value })}
+              required
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select Difficulty" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="EASY">Easy</SelectItem>
+                <SelectItem value="MEDIUM">Medium</SelectItem>
+                <SelectItem value="HARD">Hard</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm mb-1">Number of Questions *</label>
+              <label className="block text-sm mb-1">Total Number of Questions *</label>
               <Input
                 type="number"
-                placeholder="Number of Questions"
+                placeholder="Total Questions"
                 value={examData.no_of_questions}
                 onChange={(e) => setExamData({ ...examData, no_of_questions: e.target.value })}
                 required
@@ -131,7 +181,7 @@ const AddExamModel = ({ setShowExamForm, user }) => {
               <label className="block text-sm mb-1">Number of Programming Questions *</label>
               <Input
                 type="number"
-                placeholder="Number of Programming Questions"
+                placeholder="Programming Questions"
                 value={examData.no_of_programming_questions}
                 onChange={(e) => setExamData({ ...examData, no_of_programming_questions: e.target.value })}
                 required
@@ -139,6 +189,55 @@ const AddExamModel = ({ setShowExamForm, user }) => {
               />
             </div>
           </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm mb-1">Logical Questions *</label>
+              <Input
+                type="number"
+                placeholder="Logical Questions"
+                value={examData.no_of_Logical_questions}
+                onChange={(e) => {
+                  setExamData({ ...examData, no_of_Logical_questions: e.target.value });
+                  setQuestionDistributionError('');
+                }}
+                required
+                min="0"
+              />
+            </div>
+            <div>
+              <label className="block text-sm mb-1">Technical Questions *</label>
+              <Input
+                type="number"
+                placeholder="Technical Questions"
+                value={examData.no_of_Technical_questions}
+                onChange={(e) => {
+                  setExamData({ ...examData, no_of_Technical_questions: e.target.value });
+                  setQuestionDistributionError('');
+                }}
+                required
+                min="0"
+              />
+            </div>
+            <div>
+              <label className="block text-sm mb-1">Programming MCQ *</label>
+              <Input
+                type="number"
+                placeholder="Programming MCQ"
+                value={examData.no_of_Programming_mcq_questions}
+                onChange={(e) => {
+                  setExamData({ ...examData, no_of_Programming_mcq_questions: e.target.value });
+                  setQuestionDistributionError('');
+                }}
+                required
+                min="0"
+              />
+            </div>
+          </div>
+
+          {questionDistributionError && (
+            <div className="text-red-500 text-sm">{questionDistributionError}</div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -253,6 +352,7 @@ const AddExamModel = ({ setShowExamForm, user }) => {
               min="1"
             />
           </div>
+
           <div>
             <label className="block text-sm mb-1">Passing Marks *</label>
             <Input

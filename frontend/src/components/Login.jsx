@@ -29,7 +29,6 @@ const Login = ({ onLoginSuccess }) => {
           console.error('Error fetching token:', error);
           throw new Error('Failed to fetch token');
       });
-      console.log(token)
   
       const response = await fetch(`http://localhost:8081/user/${username}`, {
           method: 'GET',
@@ -52,7 +51,6 @@ const Login = ({ onLoginSuccess }) => {
           throw new Error("Failed to authenticate request");
       });
       response.token = token
-      console.log(response);
       onLoginSuccess(response);
   
       if (response.role === 'ADMIN') {

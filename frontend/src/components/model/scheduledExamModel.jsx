@@ -117,7 +117,6 @@ const ScheduledExams = ({user, onStartExam}) => {
       ]);
       
       const data = {regularQuestions,programmingQuestions}
-      console.log(data)
       onStartExam(exam, data);
       navigate('/exam');
     } catch (err) {

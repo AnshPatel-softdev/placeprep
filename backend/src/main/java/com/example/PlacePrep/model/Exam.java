@@ -24,6 +24,18 @@ public class Exam {
     @Column(name = "no_of_questions")
     private Integer no_of_questions;
 
+    @Column(name = "difficulty")
+    private String difficulty;
+
+    @Column(name = "no_of_Logical_questions")
+    private Integer no_of_Logical_questions;
+
+    @Column(name = "no_of_Technical_questions")
+    private Integer no_of_Technical_questions;
+
+    @Column(name = "no_of_Programming_mcq_questions")
+    private Integer no_of_Programming_mcq_questions;
+
     @Column(name = "no_of_programming_questions")
     private Integer no_of_programming_questions;
 

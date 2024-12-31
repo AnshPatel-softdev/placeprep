@@ -44,7 +44,6 @@ const ShowExamModel = ({ user }) => {
   const [deleteExam, setDeleteExam] = useState(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
-  // Filter states
   const [filters, setFilters] = useState({
     examName: '',
     college: '',
@@ -56,6 +55,10 @@ const ShowExamModel = ({ user }) => {
   const [editFormData, setEditFormData] = useState({
     exam_name: '',
     no_of_questions: '',
+    difficulty: 'EASY',
+    no_of_Logical_questions: '',
+    no_of_Technical_questions: '',
+    no_of_Programming_mcq_questions: '',
     no_of_programming_questions: '',
     exam_start_date: '',
     exam_start_time: '',
@@ -77,7 +80,7 @@ const ShowExamModel = ({ user }) => {
     'Civil Engineering', 
     'Information Technology'
   ];
-
+  const difficultyLevels = ['EASY', 'MEDIUM', 'HARD'];
   const semesters = ['1', '2', '3', '4', '5', '6', '7', '8'];
 
   useEffect(() => {
@@ -134,20 +137,31 @@ const ShowExamModel = ({ user }) => {
   });
 
   const handleUpdate = async () => {
-    editFormData.semester = parseInt(editFormData.semester)
-    editFormData.passing_marks = parseInt(editFormData.passing_marks)
-    editFormData.total_marks = parseInt(editFormData.total_marks)
-    editFormData.duration = parseInt(editFormData.duration)
-    editFormData.no_of_questions = parseInt(editFormData.no_of_questions)
-    editFormData.no_of_programming_questions = parseInt(editFormData.no_of_programming_questions);
+    const integerFields = [
+      'no_of_questions',
+      'no_of_Logical_questions',
+      'no_of_Technical_questions',
+      'no_of_Programming_mcq_questions',
+      'no_of_programming_questions',
+      'semester',
+      'passing_marks',
+      'total_marks',
+      'duration'
+    ];
+    
+    const updatedFormData = { ...editFormData };
+    integerFields.forEach(field => {
+      updatedFormData[field] = parseInt(editFormData[field]);
+    });
+
     try {
-      const response = await fetch(`http://localhost:8081/exam/${editFormData.id}`, {
+      const response = await fetch(`http://localhost:8081/exam/${updatedFormData.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${user.token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(editFormData),
+        body: JSON.stringify(updatedFormData),
       });
       
       if (!response.ok) {
@@ -363,36 +377,69 @@ const ShowExamModel = ({ user }) => {
       </div>
 
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Exam Details</DialogTitle>
-          </DialogHeader>
-          {selectedExam && (
+    <DialogContent className="max-w-2xl">
+      <DialogHeader>
+        <DialogTitle>Exam Details</DialogTitle>
+      </DialogHeader>
+      {selectedExam && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-6">
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-semibold mb-2">Basic Information</h3>
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Basic Information</h3>
+                <div className="space-y-2">
                   <p><span className="font-medium">Exam Name:</span> {selectedExam.exam_name}</p>
                   <p><span className="font-medium">College:</span> {selectedExam.college}</p>
                   <p><span className="font-medium">Branch:</span> {selectedExam.branch}</p>
                   <p><span className="font-medium">Semester:</span> {selectedExam.semester}</p>
-                  <p><span className="font-medium">MCQ Questions:</span> {selectedExam.no_of_questions}</p>
-                  <p><span className="font-medium">Programming Questions:</span> {selectedExam.no_of_programming_questions}</p>
-                  <p><span className="font-medium">Total Marks:</span> {selectedExam.total_marks}</p>
-                  <p><span className="font-medium">Passing Marks:</span> {selectedExam.passing_marks}</p>
-                  <p><span className="font-medium">Duration:</span> {selectedExam.duration} mins</p>
                 </div>
-                <div>
-                  <h3 className="font-semibold mb-2">Schedule</h3>
-                  <p><span className="font-medium">Start:</span> {formatDateTime(selectedExam.exam_start_date, selectedExam.exam_start_time)}</p>
-                  <p><span className="font-medium">End:</span> {formatDateTime(selectedExam.exam_end_date, selectedExam.exam_end_time)}</p>
-                  <p><span className="font-medium">Created By:</span> {selectedExam.created_by}</p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Question Distribution</h3>
+                <div className="space-y-2">
+                  <p><span className="font-medium">Total Questions:</span> {selectedExam.no_of_questions}</p>
+                  <p><span className="font-medium">Difficulty Level:</span> {selectedExam.difficulty}</p>
+                  <p><span className="font-medium">Logical Questions:</span> {selectedExam.no_of_Logical_questions}</p>
+                  <p><span className="font-medium">Technical Questions:</span> {selectedExam.no_of_Technical_questions}</p>
+                  <p><span className="font-medium">Programming MCQs:</span> {selectedExam.no_of_Programming_mcq_questions}</p>
+                  <p><span className="font-medium">Programming Questions:</span> {selectedExam.no_of_programming_questions}</p>
                 </div>
               </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Exam Schedule</h3>
+                <div className="space-y-2">
+                  <p><span className="font-medium">Start:</span> {formatDateTime(selectedExam.exam_start_date, selectedExam.exam_start_time)}</p>
+                  <p><span className="font-medium">End:</span> {formatDateTime(selectedExam.exam_end_date, selectedExam.exam_end_time)}</p>
+                  <p><span className="font-medium">Duration:</span> {selectedExam.duration} mins</p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Scoring</h3>
+                <div className="space-y-2">
+                  <p><span className="font-medium">Total Marks:</span> {selectedExam.total_marks}</p>
+                  <p><span className="font-medium">Passing Marks:</span> {selectedExam.passing_marks}</p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Additional Information</h3>
+                <div className="space-y-2">
+                  <p><span className="font-medium">Created By:</span> {selectedExam.created_by}</p>
+                  <p><span className="font-medium">Created At:</span> {new Date(selectedExam.created_at).toLocaleString()}</p>
+                  <p><span className="font-medium">Last Updated:</span> {new Date(selectedExam.updated_at).toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </DialogContent>
+  </Dialog>
 
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -450,6 +497,61 @@ const ShowExamModel = ({ user }) => {
                   value={editFormData.no_of_programming_questions}
                   onChange={handleInputChange}
                   min="0"
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="difficulty" className="text-sm font-medium">Difficulty Level</Label>
+                <Select
+                  name="difficulty"
+                  value={editFormData.difficulty}
+                  onValueChange={(value) => handleSelectChange('difficulty', value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Difficulty" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {difficultyLevels.map((level) => (
+                      <SelectItem key={level} value={level}>
+                        {level}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="no_of_Logical_questions" className="text-sm font-medium">Logical Questions</Label>
+                <Input
+                  id="no_of_Logical_questions"
+                  name="no_of_Logical_questions"
+                  type="number"
+                  value={editFormData.no_of_Logical_questions}
+                  onChange={handleInputChange}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="no_of_Technical_questions" className="text-sm font-medium">Technical Questions</Label>
+                <Input
+                  id="no_of_Technical_questions"
+                  name="no_of_Technical_questions"
+                  type="number"
+                  value={editFormData.no_of_Technical_questions}
+                  onChange={handleInputChange}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="no_of_Programming_mcq_questions" className="text-sm font-medium">Programming MCQs</Label>
+                <Input
+                  id="no_of_Programming_mcq_questions"
+                  name="no_of_Programming_mcq_questions"
+                  type="number"
+                  value={editFormData.no_of_Programming_mcq_questions}
+                  onChange={handleInputChange}
                   className="w-full"
                 />
               </div>
