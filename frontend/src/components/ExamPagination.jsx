@@ -18,6 +18,9 @@ const ExamPagination = ({ exam, questions, user }) => {
   const [showProgrammingSection, setShowProgrammingSection] = useState(false);
   const [currentProgrammingIndex, setCurrentProgrammingIndex] = useState(0);
   const [programmingAnswers, setProgrammingAnswers] = useState({});
+  const [isTimerPaused, setIsTimerPaused] = useState(false);
+  const [tabChangeCount, setTabChangeCount] = useState(0);
+  const MAX_TAB_CHANGES = 3;
   useEffect(() => {
     const preventCopyPaste = (e) => {
       e.preventDefault();
@@ -39,7 +42,7 @@ const ExamPagination = ({ exam, questions, user }) => {
   }, []);
 
   useEffect(() => {
-    if (timeRemaining > 0 && !isExamCompleted) {
+    if (timeRemaining > 0 && !isExamCompleted && !isTimerPaused) {
       const timer = setTimeout(() => {
         setTimeRemaining(prev => prev - 1);
       }, 1000);
@@ -48,7 +51,7 @@ const ExamPagination = ({ exam, questions, user }) => {
     } else if (timeRemaining === 0) {
       handleSubmitExam();
     }
-  }, [timeRemaining, isExamCompleted]);
+  }, [timeRemaining, isExamCompleted, isTimerPaused]);
 
   useEffect(() => {
     const preventContextMenu = (e) => {
@@ -65,7 +68,38 @@ const ExamPagination = ({ exam, questions, user }) => {
       document.removeEventListener('contextmenu', preventContextMenu);
     };
   }, []);
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setIsTimerPaused(true);
+        setTabChangeCount(prev => prev + 1);
+        setAlertMessage({
+          message: `Warning: Exam paused. Tab changes: ${tabChangeCount + 1}/${MAX_TAB_CHANGES}`,
+          type: 'error'
+        });
 
+        if (tabChangeCount + 1 >= MAX_TAB_CHANGES) {
+          handleSubmitExam();
+          setAlertMessage({
+            message: "Maximum tab changes exceeded. Exam automatically submitted.",
+            type: 'error'
+          });
+        }
+      } else {
+        setIsTimerPaused(false);
+        setAlertMessage({
+          message: "Exam resumed",
+          type: 'default'
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [tabChangeCount]);
   const saveQuestionAttempt = async (questionId, selectedOption) => {
     try {
       const attemptData = {
@@ -91,7 +125,6 @@ const ExamPagination = ({ exam, questions, user }) => {
 
   const saveProgrammingAttempt = async () => {
     try {
-      // Save all programming answers
       for (const [index, code] of Object.entries(programmingAnswers)) {
         const programmingAttemptData = {
           userId: parseInt(user.id),
@@ -389,8 +422,13 @@ const ExamPagination = ({ exam, questions, user }) => {
         </Alert>
       )}
 
-      <div className="text-right mb-4 font-bold text-red-600">
-        Time Remaining: {formatTime(timeRemaining)}
+      <div className="text-right mb-4">
+        <div className="font-bold text-red-600">
+          Time Remaining: {formatTime(timeRemaining)}
+        </div>
+        <div className="text-sm text-gray-600">
+          Tab Changes: {tabChangeCount}/{MAX_TAB_CHANGES}
+        </div>
       </div>
 
       <Card>
