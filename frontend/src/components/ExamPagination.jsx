@@ -21,6 +21,24 @@ const ExamPagination = ({ exam, questions, user }) => {
   const [isTimerPaused, setIsTimerPaused] = useState(false);
   const [tabChangeCount, setTabChangeCount] = useState(0);
   const MAX_TAB_CHANGES = 3;
+
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (!isExamCompleted) {
+        e.preventDefault();
+        const message = "Are you sure you want to leave? Your exam progress will not be saved.";
+        e.returnValue = message;
+        return message;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isExamCompleted]);
+
   useEffect(() => {
     const preventCopyPaste = (e) => {
       e.preventDefault();
@@ -68,6 +86,7 @@ const ExamPagination = ({ exam, questions, user }) => {
       document.removeEventListener('contextmenu', preventContextMenu);
     };
   }, []);
+
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
@@ -100,6 +119,7 @@ const ExamPagination = ({ exam, questions, user }) => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [tabChangeCount]);
+  
   const saveQuestionAttempt = async (questionId, selectedOption) => {
     try {
       const attemptData = {
@@ -125,26 +145,33 @@ const ExamPagination = ({ exam, questions, user }) => {
 
   const saveProgrammingAttempt = async () => {
     try {
-      for (const [index, code] of Object.entries(programmingAnswers)) {
+      const promises = Object.entries(programmingAnswers).map(([index, code]) => {
         const programmingAttemptData = {
           userId: parseInt(user.id),
           examId: parseInt(exam.id),
-          programmingQuestionId: programmingQuestions[parseInt(index)].id,
+          programmingQuestionId: programmingQuestions[parseInt(index)].programmingQuestion.id,
           answer: code
         };
 
-        await axios.post('http://localhost:8081/attempted_programming_question', programmingAttemptData, {
-          headers: {
-            'Authorization': `Bearer ${user.token}`
+        return axios.post('http://localhost:8081/attempted_programming_question', 
+          programmingAttemptData, 
+          {
+            headers: {
+              'Authorization': `Bearer ${user.token}`
+            }
           }
-        });
-      }
+        );
+      });
+
+      await Promise.all(promises);
+      return true;
     } catch (error) {
       console.error('Failed to save programming attempt:', error);
       setAlertMessage({
         message: "Failed to save programming attempt.",
         type: 'error'
       });
+      throw error;
     }
   };
 
@@ -238,7 +265,7 @@ const ExamPagination = ({ exam, questions, user }) => {
     try {
       setIsSubmitting(true);
 
-      if (programmingQuestions.length > 0) {
+      if (programmingQuestions.length > 0 && Object.keys(programmingAnswers).length > 0) {
         await saveProgrammingAttempt();
       }
 
@@ -287,6 +314,7 @@ const ExamPagination = ({ exam, questions, user }) => {
       });
 
     } catch (error) {
+      console.error('Failed to submit exam:', error);
       setAlertMessage({
         message: "Failed to submit exam. Please try again.",
         type: 'error'
