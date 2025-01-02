@@ -29,20 +29,20 @@ const ScheduledExams = ({user, onStartExam}) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const [attemptedExams, setAttemptedExams] = useState([]);
 
   const [filters, setFilters] = useState({
     examName: '',
-    examStatus: 'IN_PROGRESS',
+    examStatus: 'ALL',
     startDate: '',
     college: user.college || '',
     semester: user.semester || '',
     branch: user.branch || ''
-  });
-
+  }); 
   useEffect(() => {
-    fetchExams();
+    fetchExams()
+    fetchAttemptedExams()
   }, []);
-
   const fetchExams = async () => {
     try {
       const response = await fetch('http://localhost:8081/exam', {
@@ -64,6 +64,28 @@ const ScheduledExams = ({user, onStartExam}) => {
       console.error('Error fetching exams:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAttemptedExams = async () => {
+    try {
+      const response = await fetch('http://localhost:8081/attemptedexam', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${user.token}`,
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch attempted exams');
+      }
+      
+      const data = await response.json();
+      setAttemptedExams(data);
+      
+    } catch (err) {
+      console.error('Error fetching attempted exams:', err);
+      setError('Failed to fetch attempted exams');
     }
   };
 
@@ -128,30 +150,39 @@ const ScheduledExams = ({user, onStartExam}) => {
     return `${date}T${time}`;
   };
 
-  const isExamAccessible = (startDate, startTime, endDate, endTime) => {
-    const now = new Date();
-    const examStart = new Date(combineDateTime(startDate, startTime));
-    const examEnd = new Date(combineDateTime(endDate, endTime));
+  const isExamAttempted = (exam) => {
+    return attemptedExams.some(attemptedExam => attemptedExam.exam.id === exam.id);
+  };
 
+  const isExamAccessible = (exam) => {
+    const now = new Date();
+    const examStart = new Date(combineDateTime(exam.exam_start_date, exam.exam_start_time));
+    const examEnd = new Date(combineDateTime(exam.exam_end_date, exam.exam_end_time));
+  
     return isWithinInterval(now, {
       start: examStart,
       end: examEnd
     });
   };
 
-  const getExamStatus = (startDate, startTime, endDate, endTime) => {
-    const now = new Date();
-    const examStart = new Date(combineDateTime(startDate, startTime));
-    const examEnd = new Date(combineDateTime(endDate, endTime));
+const getExamStatus = (exam) => {
+  
+  if (isExamAttempted(exam)) {
+    return "Attempted";
+  }
 
-    if (now < examStart) {
-      return "Upcoming";
-    } else if (now > examEnd) {
-      return "Expired";
-    } else {
-      return "In Progress";
-    }
-  };
+  const now = new Date();
+  const examStart = new Date(combineDateTime(exam.exam_start_date, exam.exam_start_time));
+  const examEnd = new Date(combineDateTime(exam.exam_end_date, exam.exam_end_time));
+
+  if (now < examStart) {
+    return "Upcoming";
+  } else if (now > examEnd) {
+    return "Expired";
+  } else {
+    return "In Progress";
+  }
+};
 
   const handleFilterChange = (filterName, value) => {
     setFilters(prevFilters => ({
@@ -161,19 +192,19 @@ const ScheduledExams = ({user, onStartExam}) => {
   };
 
   const filteredExams = exams.filter(exam => {
+    const isAttempted = attemptedExams.some(
+      attemptedExam => attemptedExam.exam_id === exam.id
+    );
+  
     const matchesCriteria = 
       exam.college === user.college &&
-      exam.semester === user.semester  
+      exam.semester === user.semester;
+      
     const matchesName = 
       !filters.examName || 
       exam.exam_name.toLowerCase().includes(filters.examName.toLowerCase());
   
-    const currentStatus = getExamStatus(
-      exam.exam_start_date, 
-      exam.exam_start_time, 
-      exam.exam_end_date, 
-      exam.exam_end_time
-    );
+    const currentStatus = getExamStatus(exam);
   
     const matchesStatus = 
       filters.examStatus === 'ALL' || 
@@ -184,6 +215,10 @@ const ScheduledExams = ({user, onStartExam}) => {
     const matchesStartDate = 
       !filters.startDate || 
       new Date(exam.exam_start_date) >= new Date(filters.startDate);
+  
+    if (isAttempted && filters.examStatus !== 'ALL') {
+      return false;
+    }
   
     return matchesCriteria && matchesName && matchesStatus && matchesStartDate;
   });
@@ -196,6 +231,8 @@ const ScheduledExams = ({user, onStartExam}) => {
         return 'bg-blue-100 text-blue-800';
       case 'Expired':
         return 'bg-red-100 text-red-800';
+      case 'Attempted':
+        return 'bg-purple-100 text-purple-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -347,32 +384,19 @@ const ScheduledExams = ({user, onStartExam}) => {
             </CardContent>
 
             <CardFooter>
-              <Button
-                onClick={() => handleAttemptExam(exam)}
-                disabled={!isExamAccessible(
-                  exam.exam_start_date, 
-                  exam.exam_start_time, 
-                  exam.exam_end_date, 
-                  exam.exam_end_time
-                )}
-                className="w-full"
-              >
-                {isExamAccessible(
-                  exam.exam_start_date, 
-                  exam.exam_start_time, 
-                  exam.exam_end_date, 
-                  exam.exam_end_time
-                )
-                  ? "Attempt Exam"
-                  : getExamStatus(
-                      exam.exam_start_date, 
-                      exam.exam_start_time, 
-                      exam.exam_end_date, 
-                      exam.exam_end_time
-                    ) === "Expired"
-                  ? "Exam Ended"
-                  : "Not Started Yet"}
-              </Button>
+            <Button
+              onClick={() => handleAttemptExam(exam)}
+              disabled={isExamAttempted(exam) || !isExamAccessible(exam)}
+              className="w-full"
+            >
+              {isExamAttempted(exam)
+                ? "Already Attempted"
+                : isExamAccessible(exam)
+                ? "Attempt Exam"
+                : getExamStatus(exam) === "Expired"
+                ? "Exam Ended"
+                : "Not Started Yet"}
+            </Button>
             </CardFooter>
           </Card>
         ))

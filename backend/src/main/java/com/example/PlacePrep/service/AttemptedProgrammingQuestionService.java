@@ -35,7 +35,6 @@ public class AttemptedProgrammingQuestionService {
         attemptedProgrammingQuestion.setUser(userRepository.findById(attemptedProgrammingQuestionDTO.getUserId()));
         attemptedProgrammingQuestion.setProgrammingQuestion(programmingQuestionRepository.findById(attemptedProgrammingQuestionDTO.getProgrammingQuestionId()));
         attemptedProgrammingQuestion.setExam(examRepository.findById(attemptedProgrammingQuestionDTO.getExamId()));
-        System.out.println(attemptedProgrammingQuestionDTO.getAnswer());
         attemptedProgrammingQuestion.setAnswer(attemptedProgrammingQuestionDTO.getAnswer());
         attemptedProgrammingQuestion.setCreatedAt(LocalDateTime.now());
         attemptedProgrammingQuestion.setUpdatedAt(LocalDateTime.now());
