@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
 
-@Entity  // Add this annotation - it's required for JPA
+@Entity
 @Getter
 @Setter
 @Table(name = "users")

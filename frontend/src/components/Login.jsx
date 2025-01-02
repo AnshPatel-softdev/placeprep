@@ -4,11 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {useNavigate} from 'react-router-dom'
-
+import axios from 'axios';
 const Login = ({ onLoginSuccess }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
   const navigate = useNavigate()
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -29,7 +30,7 @@ const Login = ({ onLoginSuccess }) => {
           console.error('Error fetching token:', error);
           throw new Error('Failed to fetch token');
       });
-  
+      
       const response = await fetch(`http://localhost:8081/user/${username}`, {
           method: 'GET',
           headers: {
@@ -50,6 +51,27 @@ const Login = ({ onLoginSuccess }) => {
           console.error("There was a problem with the fetch operation:", error);
           throw new Error("Failed to authenticate request");
       });
+      
+      try{
+        const userLog = {
+          userId:parseInt(response.id)
+        }
+        console.log(userLog)
+          const response1 = await axios.post(
+          'http://localhost:8081/userlog',
+          userLog,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+      } catch (error) {
+        console.error('Error:', error.response1?.data || error.message);
+      }
+
       response.token = token
       onLoginSuccess(response);
   

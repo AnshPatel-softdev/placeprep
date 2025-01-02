@@ -13,6 +13,7 @@ import ShowAttemptedQuestionsModel from './model/showAttemptedQuestionModel';
 import AddProgrammingQuestionModel from './model/addProgrammingQuestionModel';
 import ShowProgrammingQuestionModel from './model/showProgrammingQuestionModel';
 import ShowAttemptedProgrammingQuestionModel from './model/showAttemptedProgrammingQuestionModel';
+import UserLoginDetails from './model/showUserLogModel';
 
 const AdminDashboard = ({ user }) => {
     const [activePanel, setActivePanel] = useState(null);
@@ -131,6 +132,13 @@ const AdminDashboard = ({ user }) => {
                     >
                         {activePanel === 'showAttemptedProgrammingQuestion' ? 'Cancel' : 'Show Attempted Programming Questions'}
                     </Button>
+
+                    <Button 
+                        onClick={() => togglePanel('showUserLog')}
+                        variant={activePanel === 'showUserLog' ? 'secondary' : 'default'}
+                    >
+                        {activePanel === 'showUserLog' ? 'Cancel' : 'Show UserLog'}
+                    </Button>
                 </div>
             </div>
 
@@ -209,6 +217,10 @@ const AdminDashboard = ({ user }) => {
 
                 {activePanel === 'showAttemptedProgrammingQuestion' && (
                     <ShowAttemptedProgrammingQuestionModel user={user} />
+                )}
+
+                {activePanel === 'showUserLog' && (
+                    <UserLoginDetails user={user} />
                 )}
             </div>
         </div>
