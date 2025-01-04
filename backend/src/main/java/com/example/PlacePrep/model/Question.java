@@ -12,7 +12,6 @@ public class Question {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-
     private String quesdesc;
     private String option1;
     private String option2;

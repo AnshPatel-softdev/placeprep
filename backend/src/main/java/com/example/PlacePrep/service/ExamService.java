@@ -132,6 +132,20 @@ public class ExamService {
         Collections.shuffle(selectedQuestions);
         return selectedQuestions;
     }
+
+    public void addExamProgrammingQuestion(int examid, ProgrammingQuestion programmingQuestion) {
+        Exam exam = examRepository.findById(examid);
+        ExamProgrammingQuestion examProgrammingQuestion = new ExamProgrammingQuestion();
+        examProgrammingQuestion.setExam(exam);
+        examProgrammingQuestion.setProgrammingQuestion(programmingQuestion);
+        examProgrammingQuestion.setCreatedBy(exam.getCreated_by());
+        examProgrammingQuestion.setCreatedAt(LocalDateTime.now());
+        examProgrammingQuestionRepository.save(examProgrammingQuestion);
+    }
+
+    public void deleteExamProgrammingQuestion(int examid, int questionid) {
+        examProgrammingQuestionRepository.deleteByExamIdAndProgrammingQuestionId(examid,questionid);
+    }
     public void addExam(Exam exam, Iterable<Question> questions, Iterable<ProgrammingQuestion> programmingQuestions) {
         exam.setCollege(exam.getCollege().toUpperCase());
         exam.setCreated_at(LocalDateTime.now());

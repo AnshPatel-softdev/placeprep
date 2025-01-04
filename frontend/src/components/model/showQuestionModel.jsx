@@ -62,7 +62,7 @@ const ShowQuestionModel = ({user}) => {
     difficulty: ''
   });
 
-  const types = ['Technical', 'Logical'];
+  const types = ['Technical', 'Logical','Programming'];
   const difficulties = ['Easy', 'Medium', 'Hard'];
 
   useEffect(() => {

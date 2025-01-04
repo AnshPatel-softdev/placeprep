@@ -5,23 +5,29 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Trash2, Plus, Loader2, AlertCircle, Eye } from 'lucide-react';
+import { Trash2, Plus, Loader2, AlertCircle, Eye, Code } from 'lucide-react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ExamManagement = ({user}) => {
   const [exams, setExams] = useState([]);
-  const [questions, setQuestions] = useState([]);
+  const [mcqQuestions, setMcqQuestions] = useState([]);
+  const [programmingQuestions, setProgrammingQuestions] = useState([]);
   const [allQuestions, setAllQuestions] = useState([]);
   const [selectedExam, setSelectedExam] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [deleteQuestion, setDeleteQuestion] = useState(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showAddQuestionDialog, setShowAddQuestionDialog] = useState(false);
+  const [showAddQuestionDialog, setShowAddQuestionDialog] = useState(false);  
   const [selectedQuestions, setSelectedQuestions] = useState([]);
   const [viewQuestionDetails, setViewQuestionDetails] = useState(null);
+  const [activeTab, setActiveTab] = useState("mcq");
+  const [allProgrammingQuestions, setAllProgrammingQuestions] = useState([]);
+  const [selectedProgrammingQuestions, setSelectedProgrammingQuestions] = useState([]);
+  const [showAddProgrammingDialog, setShowAddProgrammingDialog] = useState(false);
 
   const [filters, setFilters] = useState({
     id: '',
@@ -30,8 +36,8 @@ const ExamManagement = ({user}) => {
     source: 'EXAM'
   });
 
-  const types = ['Technical', 'Logical'];
-  const difficulties = ['Easy', 'Medium', 'Hard'];
+  const types = ['Technical', 'Logical','Programming'];
+  const difficulty = ['Easy', 'Medium', 'Hard'];
 
   const fetchExams = async () => {
     setIsLoading(true);
@@ -52,28 +58,37 @@ const ExamManagement = ({user}) => {
 
   const fetchAllQuestions = async () => {
     try {
-      const response = await axios.get('http://localhost:8081/question', {
-        headers: {
-          'Authorization': `Bearer ${user.token}`
-        }
-      });
-      setAllQuestions(response.data);
+      const [mcqResponse, programmingResponse] = await Promise.all([
+        axios.get('http://localhost:8081/question', {
+          headers: { 'Authorization': `Bearer ${user.token}` }
+        }),
+        axios.get('http://localhost:8081/programming-question', {
+          headers: { 'Authorization': `Bearer ${user.token}` }
+        })
+      ]);
+      
+      setAllQuestions(mcqResponse.data);
+      setAllProgrammingQuestions(programmingResponse.data);
+
     } catch (error) {
       setError('Failed to fetch available questions.');
     }
   };
-
+  console.log(allProgrammingQuestions)
   const fetchExamQuestions = async (examId) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`http://localhost:8081/exam/${parseInt(examId)}`, {
-        headers: {
-          'Authorization': `Bearer ${user.token}`
-        }
+      const mcqResponse = await axios.get(`http://localhost:8081/exam/${examId}`, {
+        headers: { 'Authorization': `Bearer ${user.token}` }
       });
-      const data = response.data.map(item => item.question)
-      setQuestions(data);
+      const mcqData = mcqResponse.data.map(item => item.question);
+      setMcqQuestions(mcqData);
+
+      const programmingResponse = await axios.get(`http://localhost:8081/exam/programming/${parseInt(examId)}`, {
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      });
+      setProgrammingQuestions(programmingResponse.data);
       setIsLoading(false);
     } catch (error) {
       setError('Failed to fetch exam questions. Please try again later.');
@@ -89,7 +104,7 @@ const ExamManagement = ({user}) => {
     }));
   };
 
-  const filteredExamQuestions = questions.filter(question => {
+  const filteredExamQuestions = mcqQuestions.filter(question => {
     return (
       (filters.source !== 'EXAM' || filters.id === '' || 
         question.id.toString().includes(filters.id)) &&
@@ -101,7 +116,7 @@ const ExamManagement = ({user}) => {
   });
 
   const filteredAvailableQuestions = allQuestions
-    .filter(q => !questions.some(eq => eq.id === q.id))
+    .filter(q => !mcqQuestions.some(eq => eq.id === q.id))
     .filter(question => {
       return (
         (filters.source !== 'ADD' || filters.id === '' || 
@@ -126,11 +141,29 @@ const ExamManagement = ({user}) => {
               'Authorization': `Bearer ${user.token}`
             }
           });
-        setQuestions(questions.filter(q => q.id !== deleteQuestion.id));
+        setMcqQuestions(mcqQuestions.filter(q => q.id !== deleteQuestion.id));
         setShowDeleteDialog(false);
         setDeleteQuestion(null);
       } catch (error) {
         setError('Failed to delete question. Please try again later.');
+        setShowDeleteDialog(false);
+      }
+    }
+  };
+
+  const handleDeleteProgrammingQuestion = async () => {
+    if (deleteQuestion && selectedExam) {
+      try {
+        await axios.delete(`http://localhost:8081/exam/programming/${selectedExam.id}/${deleteQuestion.id}`, {
+          headers: {
+            'Authorization': `Bearer ${user.token}`
+          }
+        });
+        setProgrammingQuestions(programmingQuestions.filter(q => q.id !== deleteQuestion.id));
+        setShowDeleteDialog(false);
+        setDeleteQuestion(null);
+      } catch (error) {
+        setError('Failed to delete programming question. Please try again later.');
         setShowDeleteDialog(false);
       }
     }
@@ -150,7 +183,6 @@ const ExamManagement = ({user}) => {
       try {
         for (const questionId of selectedQuestions) {
             const selectedQuestion = allQuestions.find((item) => item.id === questionId);
-            console.log(selectedQuestion);
             
             await axios.post(`http://localhost:8081/exam/${selectedExam.id}`, 
               selectedQuestion,
@@ -174,6 +206,33 @@ const ExamManagement = ({user}) => {
     }
   };
 
+  const handleAddSelectedProgrammingQuestions = async () => {
+    if (selectedExam && selectedProgrammingQuestions.length > 0) {
+      try {
+        for (const questionId of selectedProgrammingQuestions) {
+          const selectedQuestion = allProgrammingQuestions.find((item) => item.id === questionId);
+          
+          await axios.post(`http://localhost:8081/exam/programming/${selectedExam.id}`, 
+            selectedQuestion,
+            {
+              headers: {
+                'Authorization': `Bearer ${user.token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+        }
+        
+        fetchExamQuestions(selectedExam.id);
+        setSelectedProgrammingQuestions([]);
+        setShowAddProgrammingDialog(false);
+      } catch (error) {
+        console.error(error);
+        setError('Failed to add programming questions to exam. Please try again later.');
+      }
+    }
+  };
+
   const toggleQuestionSelection = (questionId) => {
     setSelectedQuestions(prev => 
       prev.includes(questionId) 
@@ -182,7 +241,27 @@ const ExamManagement = ({user}) => {
     );
   };
 
+  const toggleProgrammingQuestionSelection = (questionId) => {
+    setSelectedProgrammingQuestions(prev => 
+      prev.includes(questionId) 
+        ? prev.filter(id => id !== questionId)
+        : [...prev, questionId]
+    );
+  };
+
+  const filteredAvailableProgrammingQuestions = allProgrammingQuestions
+    .filter(q => !programmingQuestions.some(eq => eq.id === q.id))
+    .filter(question => {
+      return (
+        (filters.source !== 'ADD' || filters.id === '' || 
+          question.id.toString().includes(filters.id)) &&
+        (filters.source !== 'ADD' || filters.difficulty === 'ALL' || 
+          question.difficulty?.toLowerCase() === filters.difficulty.toLowerCase())
+      );
+    });
+
   const getDifficultyColor = (difficulty) => {
+    if (!difficulty) return '';
     switch (difficulty.toLowerCase()) {
       case 'easy':
         return 'text-green-600';
@@ -199,7 +278,65 @@ const ExamManagement = ({user}) => {
     fetchExams();
     fetchAllQuestions();
   }, []);
-
+  const renderQuestionDetails = (question) => {
+    if (activeTab === "mcq") {
+      return (
+        <div className="space-y-4">
+          <div>
+            <h3 className="font-semibold">Question Description:</h3>
+            <p>{question.quesdesc}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="font-semibold">Option 1:</h3>
+              <p>{question.option1}</p>
+            </div>
+            <div>
+              <h3 className="font-semibold">Option 2:</h3>
+              <p>{question.option2}</p>
+            </div>
+            <div>
+              <h3 className="font-semibold">Option 3:</h3>
+              <p>{question.option3}</p>
+            </div>
+            <div>
+              <h3 className="font-semibold">Option 4:</h3>
+              <p>{question.option4}</p>
+            </div>
+          </div>
+          <div>
+            <h3 className="font-semibold">Correct Answer:</h3>
+            <p>{question.answer}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="font-semibold">Type:</h3>
+              <p>{question.type}</p>
+            </div>
+            <div>
+              <h3 className="font-semibold">Difficulty:</h3>
+              <p>{question.difficulty}</p>
+            </div>
+          </div>
+        </div>
+      );
+    } else {
+      return (
+        <div className="space-y-4">
+          <div>
+            <h3 className="font-semibold">Problem Statement:</h3>
+            <p>{question.questionContent}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="font-semibold">Difficulty:</h3>
+              <p>{question.difficulty}</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+  };
   return (
     <div className="flex flex-col">
       {error && (
@@ -241,6 +378,12 @@ const ExamManagement = ({user}) => {
             <CardTitle>{selectedExam.exam_name} Questions</CardTitle>
           </CardHeader>
           <CardContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="mcq">MCQ Questions</TabsTrigger>
+              <TabsTrigger value="programming">Programming Questions</TabsTrigger>
+            </TabsList>
+            <TabsContent value="mcq">
             <div className="grid grid-cols-3 gap-4 mb-4">
               <Input 
                 placeholder="Question ID" 
@@ -272,7 +415,7 @@ const ExamManagement = ({user}) => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">All Difficulties</SelectItem>
-                  {difficulties.map((difficulty) => (
+                  {difficulty.map((difficulty) => (
                     <SelectItem key={difficulty} value={difficulty}>
                       {difficulty}
                     </SelectItem>
@@ -333,6 +476,83 @@ const ExamManagement = ({user}) => {
                   <Plus className="mr-2 h-4 w-4" /> Add Existing Questions
                 </Button>
               </div>
+              </TabsContent>
+              <TabsContent value="programming">
+                <div className="flex justify-between mb-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input 
+                      placeholder="Question ID" 
+                      value={filters.id}
+                      onChange={(e) => handleFilterChange('id', e.target.value, 'EXAM')}
+                    />
+                    <Select 
+                      value={filters.difficulty}
+                      onValueChange={(value) => handleFilterChange('difficulty', value, 'EXAM')}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Difficulty" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">All Difficulties</SelectItem>
+                        {difficulty.map((difficulty) => (
+                          <SelectItem key={difficulty} value={difficulty}>
+                            {difficulty}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button onClick={() => setShowAddProgrammingDialog(true)}>
+                    <Plus className="mr-2 h-4 w-4" /> Add Programming Questions
+                  </Button>
+                </div>
+
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Problem Statement</TableHead>
+                      <TableHead>Difficulty</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {programmingQuestions.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan="4" className="text-center text-gray-500">
+                          No programming questions added yet.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      programmingQuestions.map(question => (
+                        <TableRow key={question.id}>
+                          <TableCell>{question.programmingQuestion.questionContent}</TableCell>
+                          <TableCell className={getDifficultyColor(question.programmingQuestion.difficulty)}>
+                            {question.programmingQuestion.difficulty}
+                          </TableCell>
+                          <TableCell>
+                            <Button 
+                              variant="ghost"
+                              size="icon"
+                              className="mr-2"
+                              onClick={() => openQuestionDetails(question)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="destructive" 
+                              size="icon"
+                              onClick={() => openDeleteDialog(question)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         )}
@@ -366,11 +586,97 @@ const ExamManagement = ({user}) => {
               Cancel
             </Button>
             <Button
-              variant="destructive"
-              onClick={handleDeleteQuestion}
-              className="px-5 py-2"
+                variant="destructive"
+                onClick={activeTab === "mcq" ? handleDeleteQuestion : handleDeleteProgrammingQuestion}
+                className="px-5 py-2"
             >
-              Confirm
+                Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showAddProgrammingDialog} onOpenChange={setShowAddProgrammingDialog}>
+        <DialogContent className="max-w-4xl h-[600px] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Add Programming Questions to Exam</DialogTitle>
+            <DialogDescription>
+              Select programming questions to add to {selectedExam?.exam_name}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <Input 
+              placeholder="Question ID" 
+              value={filters.id}
+              onChange={(e) => handleFilterChange('id', e.target.value, 'ADD')}
+            />
+            <Select 
+              value={filters.difficulty}
+              onValueChange={(value) => handleFilterChange('difficulty', value, 'ADD')}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Difficulty" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Difficulties</SelectItem>
+                {difficulty.map((difficulties) => (
+                  <SelectItem key={difficulties} value={difficulties}>
+                    {difficulties}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex-grow overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Select</TableHead>
+                  <TableHead>Problem Statement</TableHead>
+                  <TableHead>Difficulty</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredAvailableProgrammingQuestions.map(question => (
+                  <TableRow key={question.id}>
+                    <TableCell>
+                      <Checkbox 
+                        checked={selectedProgrammingQuestions.includes(question.id)}
+                        onCheckedChange={() => toggleProgrammingQuestionSelection(question.id)}
+                      />
+                    </TableCell>
+                    <TableCell>{question.questionContent}</TableCell>
+                    <TableCell>{question.difficulty}</TableCell>
+                    <TableCell>
+                      <Button 
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openQuestionDetails(question)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="outline"
+              onClick={() => setShowAddProgrammingDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleAddSelectedProgrammingQuestions}
+              disabled={selectedProgrammingQuestions.length === 0}
+            >
+              Add {selectedProgrammingQuestions.length} Question{selectedProgrammingQuestions.length !== 1 ? 's' : ''}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -416,7 +722,7 @@ const ExamManagement = ({user}) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">All Difficulties</SelectItem>
-                {difficulties.map((difficulty) => (
+                {difficulty.map((difficulty) => (
                   <SelectItem key={difficulty} value={difficulty}>
                     {difficulty}
                   </SelectItem>
@@ -488,46 +794,7 @@ const ExamManagement = ({user}) => {
           <DialogHeader>
             <DialogTitle>Question Details</DialogTitle>
           </DialogHeader>
-          {viewQuestionDetails && (
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-semibold">Question Description:</h3>
-                <p>{viewQuestionDetails.quesdesc}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-semibold">Option 1:</h3>
-                  <p>{viewQuestionDetails.option1}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold">Option 2:</h3>
-                  <p>{viewQuestionDetails.option2}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold">Option 3:</h3>
-                  <p>{viewQuestionDetails.option3}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold">Option 4:</h3>
-                  <p>{viewQuestionDetails.option4}</p>
-                </div>
-              </div>
-              <div>
-                <h3 className="font-semibold">Correct Answer:</h3>
-                <p>{viewQuestionDetails.answer}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-semibold">Type:</h3>
-                  <p>{viewQuestionDetails.type}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold">Difficulty:</h3>
-                  <p>{viewQuestionDetails.difficulty}</p>
-                </div>
-              </div>
-            </div>
-          )}
+          {viewQuestionDetails && renderQuestionDetails(viewQuestionDetails)}
         </DialogContent>
       </Dialog>
     </div>

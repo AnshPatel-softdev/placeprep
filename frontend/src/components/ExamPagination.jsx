@@ -259,6 +259,7 @@ const ExamPagination = ({ exam, questions, user }) => {
       setCurrentQuestionIndex(regularQuestions.length - 1);
     }
   };
+
   const handleSubmitExam = useCallback(async () => {
     if (isSubmitting || isExamCompleted) return;
 
