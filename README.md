@@ -77,49 +77,8 @@ To set up and run this project locally, follow these instructions.
    npm install
    npm start
 
-  ### Database Setup
-
-1. Open SQL Server Management Studio (SSMS).
-2. Create a database named placeprep.
-3. Run This scripts
-   
-USE [placeprep]
-GO
-
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-CREATE TABLE [dbo].[users](
-	[id] [int] IDENTITY(1,1) NOT NULL,
-	[username] [varchar](50) NOT NULL,
-	[password] [varchar](50) NOT NULL,
-	[email] [varchar](50) NOT NULL,
-	[firstname] [varchar](50) NOT NULL,
-	[lastname] [varchar](50) NOT NULL,
-	[created_at] [datetime] NOT NULL,
-	[updated_at] [datetime] NOT NULL,
-	[role] [varchar](50) NOT NULL
-) ON [PRIMARY]
-GO
-
-SET IDENTITY_INSERT [dbo].[users] ON 
-GO
-
-INSERT [dbo].[users] ([id], [username], [password], [email], [firstname], [lastname], [created_at], [updated_at], [role]) VALUES (1, N'ansh', N'ansh@2704', N'a1@gmail.com', N'Ansh', N'Patel', CAST(N'2024-10-31T13:00:43.943' AS DateTime), CAST(N'2024-10-31T13:00:43.943' AS DateTime), N'ADMIN')
-GO
-
-INSERT [dbo].[users] ([id], [username], [password], [email], [firstname], [lastname], [created_at], [updated_at], [role]) VALUES (2, N'mahavir', N'mahavir2010', N'm1@gmail.com', N'Mahavir', N'Patel', CAST(N'2024-10-31T16:21:26.970' AS DateTime), CAST(N'2024-10-31T16:21:26.970' AS DateTime), N'STUDENT')
-GO
-
-INSERT [dbo].[users] ([id], [username], [password], [email], [firstname], [lastname], [created_at], [updated_at], [role]) VALUES (3, N'nisarg', N'njp14', N'n1@gmail.com', N'Nisarg', N'Patel', CAST(N'2024-11-01T09:11:21.280' AS DateTime), CAST(N'2024-11-01T09:11:21.280' AS DateTime), N'STUDENT')
-GO
-
-SET IDENTITY_INSERT [dbo].[users] OFF
-GO
-
+  ### Data
+  https://drive.google.com/drive/u/0/folders/11sfgCBbEKtW1fINm9AGNMfi14QlU1XaE
 
 ### Running the Application
 
